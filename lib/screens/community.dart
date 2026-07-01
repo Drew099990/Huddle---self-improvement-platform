@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-
+import "package:hive_flutter/hive_flutter.dart";
 //journal page
 
 class Community extends StatefulWidget {
@@ -10,55 +10,214 @@ class Community extends StatefulWidget {
 }
 
 class _JournalState extends State<Community> {
+  late Box _box;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupHive();
+  }
+
+  Future<void> _setupHive() async {
+    await Hive.initFlutter();
+    _box = await Hive.openBox("Huddle");
+    setState(() {});
+  }
+
+  void add(String value) {
+    setState(() {
+      _box.add(value);
+    });
+  }
+
+  void delete(int key) {
+    _box.delete(key);
+  }
+
+  void update(int key, String value) {
+    _box.put(key, value);
+  }
+
+  final _post = TextEditingController();
+  String post = "";
+  void _makePost() {
+    setState(() {
+      post = _post.text;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Column(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 15,
+        toolbarHeight: 70,
+        flexibleSpace: Image.asset("lib/assets/appbar.jpg", fit: BoxFit.cover),
+        title: Center(
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+            margin: EdgeInsets.all(30),
+
+            child: Text(
+              "HUDDLE",
+              style: TextStyle(
+                letterSpacing: 5,
+                fontSize: 27,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      body: SafeArea(
+        child: ListView(
           children: [
-            TextField(
-              autocorrect: true,
-              autofocus: true,
-              enabled: true,
-              decoration: InputDecoration(
-                hintText: "what are you grateful about",
+            Column(
+              children: [
+                SizedBox(height: 10),
+                Container(
+                  padding: EdgeInsets.all(
+                    MediaQuery.of(context).size.width * 0.05,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color.fromARGB(160, 15, 43, 80),
+                      width: 4,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        "Community",
+                        style: TextStyle(
+                          letterSpacing: 3,
+                          color: const Color.fromARGB(221, 11, 49, 99),
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(top: 10),
+                        width: MediaQuery.of(context).size.width * 0.80,
+                        child: TextField(
+                          autocorrect: true,
+                          controller: _post,
+                          enabled: true,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              gapPadding: 10,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            hintText: "what is on your mind?",
+                            counterText: "thoughts",
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                InkWell(
+                  onTap: _makePost,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(25, 10, 25, 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(width: 3),
+                      color: const Color.fromARGB(255, 15, 75, 105),
+                    ),
+
+                    child: Text(
+                      "Post",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                "powered by sleepy panda",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.black45),
               ),
             ),
-            TextField(
-              autocorrect: true,
-              autofocus: true,
-              enabled: true,
-              decoration: InputDecoration(
-                hintText: "what are you grateful about",
+            Divider(height: 2),
+
+            Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Container(
+                margin: EdgeInsets.all(10),
+                width: MediaQuery.of(context).size.width * 0.80,
+
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(66, 170, 193, 228),
+                  border: Border.all(
+                    width: 2,
+                    color: const Color.fromARGB(184, 4, 42, 51),
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Text(
+                      "William",
+                      style: TextStyle(
+                        fontFamily: "PrimaryFont",
+                        fontFamilyFallback: ["FallbackFont1", "sans-serif"],
+                        letterSpacing: 1,
+                        fontSize: 15,
+                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "$post",
+                      style: TextStyle(
+                        letterSpacing: 2,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          "12.2.3",
+                          style: TextStyle(),
+                          textAlign: TextAlign.right,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            TextField(
-              autocorrect: true,
-              autofocus: true,
-              enabled: true,
-              decoration: InputDecoration(
-                hintText: "what are you grateful about",
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () {},
-              child: Icon(Icons.add_a_photo_outlined),
-            ),
+            Divider(height: 2),
           ],
         ),
-        Row(
-          children: [
-            OutlinedButton(onPressed: () {}, child: Text("new entry")),
-            OutlinedButton(onPressed: () {}, child: Text("show entries")),
-          ],
-        ),
-        ListView.builder(
-          itemCount: 2,
-          itemBuilder: (BuildContext context, int index) {
-            return Card(child: Text("testing"));
-          },
-        ),
-      ],
+      ),
     );
   }
 }

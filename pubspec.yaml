@@ -1,4 +1,4 @@
-name: huddle
+name: Huddle
 description: "A platform that aids users achive thier personal improvement goals."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -35,10 +35,12 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   connectivity_plus: ^7.2.0
+  firebase_core: ^3.1.0
+  firebase_auth: ^5.0.1
+  firebase_database: ^11.0.7
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  
-  # hive_flutter: ^1.1.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -67,7 +69,7 @@ flutter:
   assets:
     - lib/assets/show.png
     - lib/assets/appbar.jpg
-    
+    - assets/hud6.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -95,10 +97,10 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "lib/assets/hud6.png"
+  image_path: "assets/hud6.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "lib/assets/hud6.png"
+  adaptive_icon_foreground: "assets/hud6.png"
   
