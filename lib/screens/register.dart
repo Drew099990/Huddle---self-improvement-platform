@@ -13,6 +13,18 @@ class Register extends StatefulWidget {
 
 class _LoginState extends State<Register> {
   bool loading = true;
+  final _userController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passController = TextEditingController();
+
+  String _userCounter = "username";
+  String _emailCounter = "email";
+  String _passCounter = "password";
+
+  bool user_valid = true;
+  bool email_valid = true;
+  bool password_valid = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,10 +91,17 @@ class _LoginState extends State<Register> {
                     height: 70,
                     child: TextField(
                       autocorrect: true,
-
+                      controller: _userController,
                       decoration: InputDecoration(
                         hintText: " username",
-                        counterText: "username",
+                        counter: Text(
+                          "$_userCounter",
+                          style: TextStyle(
+                            color: user_valid
+                                ? Colors.black54
+                                : Colors.redAccent,
+                          ),
+                        ),
                         suffixIcon: Icon(Icons.person),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -98,10 +117,17 @@ class _LoginState extends State<Register> {
                     margin: EdgeInsets.only(top: 10),
                     child: TextField(
                       autocorrect: true,
-
+                      controller: _emailController,
                       decoration: InputDecoration(
                         hintText: " email",
-                        counterText: "email",
+                        counter: Text(
+                          "$_emailCounter",
+                          style: TextStyle(
+                            color: email_valid
+                                ? Colors.black54
+                                : Colors.redAccent,
+                          ),
+                        ),
                         suffixIcon: Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -117,13 +143,21 @@ class _LoginState extends State<Register> {
                     height: 70,
                     child: TextField(
                       autocorrect: true,
+                      controller: _passController,
                       decoration: InputDecoration(
                         suffixIcon: Icon(Icons.remove_red_eye_outlined),
                         hintText: "password",
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        counterText: "password",
+                        counter: Text(
+                          "$_passCounter",
+                          style: TextStyle(
+                            color: password_valid
+                                ? Colors.black54
+                                : Colors.redAccent,
+                          ),
+                        ),
                       ),
 
                       enabled: true,
@@ -151,8 +185,26 @@ class _LoginState extends State<Register> {
                     onTap: () {
                       setState(() {
                         loading = false;
-                        widget.onRegister(true);
                       });
+
+                      if (_userController.text.isEmpty) {
+                        setState(() {
+                          user_valid = false;
+                          _userCounter = "username is missing.";
+                        });
+                      }
+                      if (_emailController.text.isEmpty) {
+                        setState(() {
+                          email_valid = false;
+                          _emailCounter = "email is missing.";
+                        });
+                      }
+                      if (_passController.text.isEmpty) {
+                        setState(() {
+                          password_valid = false;
+                          _passCounter = "password is missing.";
+                        });
+                      }
                     },
                     child: AnimatedContainer(
                       duration: Duration(seconds: 3),

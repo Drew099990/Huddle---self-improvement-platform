@@ -77,6 +77,8 @@ class _JournalState extends State<Journal> {
 
                           enabled: true,
                           decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.favorite_outline),
+
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
@@ -96,6 +98,7 @@ class _JournalState extends State<Journal> {
                           enabled: true,
 
                           decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.alt_route_sharp),
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
@@ -114,6 +117,8 @@ class _JournalState extends State<Journal> {
 
                           enabled: true,
                           decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.check_box_outlined),
+
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
@@ -143,13 +148,19 @@ class _JournalState extends State<Journal> {
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
 
-                    child: Text(
-                      "new entry",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.add, color: Colors.white60),
+
+                        Text(
+                          "new entry",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -163,13 +174,18 @@ class _JournalState extends State<Journal> {
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
 
-                    child: Text(
-                      "show entries",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.list_outlined, color: Colors.white60),
+                        Text(
+                          "show entries",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

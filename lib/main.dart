@@ -20,13 +20,7 @@ class _MyAppState extends State<MyApp> {
 
   bool loggedIN = false;
 
-  List<Widget> _PAGES = <Widget>[
-    Testing(),
-    Home(),
-    Journal(),
-    Community(),
-    Profile(),
-  ];
+  List<Widget> _PAGES = <Widget>[Home(), Journal(), Community(), Profile()];
 
   void _dataFromLogin(bool status) {
     setState(() {

@@ -141,13 +141,19 @@ class _JournalState extends State<Community> {
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
 
-                    child: Text(
-                      "Post",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(Icons.post_add_outlined, color: Colors.white60),
+                        Text(
+                          "Post",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -16,7 +16,13 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final _name = TextEditingController();
   final _password = TextEditingController();
-  bool loading = true;
+  String userCounter = "username";
+  String passwordCounter = "password";
+
+  bool not_Loading = true;
+  bool password_valid = true;
+  bool username_valid = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,7 +92,14 @@ class _LoginState extends State<Login> {
                       controller: _name,
                       decoration: InputDecoration(
                         hintText: " username",
-                        counterText: "username",
+                        counter: Text(
+                          "$userCounter",
+                          style: TextStyle(
+                            color: username_valid
+                                ? Colors.black54
+                                : Colors.redAccent,
+                          ),
+                        ),
                         suffixIcon: Icon(Icons.person),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -109,7 +122,14 @@ class _LoginState extends State<Login> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        counterText: "password",
+                        counter: Text(
+                          "$passwordCounter",
+                          style: TextStyle(
+                            color: password_valid
+                                ? Colors.black54
+                                : Colors.redAccent,
+                          ),
+                        ),
                       ),
 
                       enabled: true,
@@ -137,32 +157,64 @@ class _LoginState extends State<Login> {
                   InkWell(
                     onTap: () {
                       setState(() {
-                        loading = false;
+                        not_Loading = false;
                       });
-                      Timer(Duration(seconds: 2), () {
-                        setState(() {
-                          widget.onLogin(true);
+
+                      if (_name.text.isNotEmpty && _password.text.isNotEmpty) {
+                        Timer(Duration(seconds: 2), () {
+                          setState(() {
+                            widget.onLogin(true);
+                            not_Loading = true;
+                          });
                         });
-                      });
+                      }
+
+                      if (_name.text.isEmpty) {
+                        setState(() {
+                          username_valid = false;
+                          userCounter = "username is missing.";
+
+                          Timer(Duration(seconds: 2), () {
+                            setState(() {
+                              not_Loading = true;
+                              userCounter = "username";
+                              username_valid = true;
+                            });
+                          });
+                        });
+                      }
+                      if (_password.text.isEmpty) {
+                        setState(() {
+                          password_valid = false;
+                          passwordCounter = "password is missing";
+                          Timer(Duration(seconds: 2), () {
+                            setState(() {
+                              not_Loading = true;
+                              passwordCounter = "password";
+                              password_valid = true;
+                            });
+                          });
+                        });
+                      }
                     },
                     child: AnimatedContainer(
                       duration: Duration(seconds: 3),
                       decoration: BoxDecoration(
-                        color: loading
+                        color: not_Loading
                             ? const Color.fromARGB(255, 4, 57, 65)
                             : const Color.fromARGB(157, 4, 57, 65),
                       ),
                       padding: EdgeInsets.all(10),
                       width: MediaQuery.of(context).size.width * 0.6,
                       child: Text(
-                        loading ? "Login" : "Logging...",
+                        not_Loading ? "Login" : "Logging...",
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
                   SizedBox(height: 20),
-                  loading
+                  not_Loading
                       ? Text(
                           "Powered by sleepy panda",
                           style: TextStyle(color: Colors.black45),

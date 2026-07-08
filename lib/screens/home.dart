@@ -139,8 +139,9 @@ class _HomeState extends State<Home> {
                         size: 30,
                       ),
                       Text(
-                        "books",
+                        "Books",
                         style: TextStyle(
+                          background: Paint()..color = Colors.black26,
                           fontSize: 20,
                           color: isOnline ? Colors.white : Colors.black54,
                           fontWeight: FontWeight.bold,
@@ -155,13 +156,14 @@ class _HomeState extends State<Home> {
                 child: Container(
                   margin: EdgeInsets.only(top: 10),
                   height: 70,
-                  padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
                   decoration: BoxDecoration(
                     image: isOnline
                         ? DecorationImage(
                             image: NetworkImage(
                               "https://media.istockphoto.com/id/1285965933/photo/audiobooks-concept.jpg?s=1024x1024&w=is&k=20&c=5W_usVS6XBX3V1DM8Q3NKQsXvEG13Yh0znl9_dv4zsU=",
                             ),
+                            fit: BoxFit.cover,
                           )
                         : DecorationImage(image: NetworkImage("")),
                     color: Colors.white,
@@ -179,8 +181,10 @@ class _HomeState extends State<Home> {
                         size: 30,
                       ),
                       Text(
-                        "Audiobooks",
+                        " Audiobooks ",
                         style: TextStyle(
+                          background: Paint()..color = Colors.black26,
+
                           fontSize: 15,
                           color: isOnline ? Colors.white : Colors.black54,
                           fontWeight: FontWeight.w900,
@@ -196,7 +200,6 @@ class _HomeState extends State<Home> {
                   margin: EdgeInsets.only(top: 10),
                   height: 70,
                   width: 75,
-                  padding: EdgeInsets.fromLTRB(2, 0, 2, 0),
                   decoration: BoxDecoration(
                     image: isOnline
                         ? DecorationImage(
@@ -222,8 +225,10 @@ class _HomeState extends State<Home> {
                         size: 30,
                       ),
                       Text(
-                        "videos",
+                        "Videos",
                         style: TextStyle(
+                          background: Paint()..color = Colors.black26,
+
                           fontSize: 20,
                           color: isOnline ? Colors.white : Colors.black54,
                           fontWeight: FontWeight.bold,
@@ -238,43 +243,42 @@ class _HomeState extends State<Home> {
           SizedBox(height: 2),
 
           Divider(color: const Color.fromARGB(83, 167, 176, 206), thickness: 2),
-          Column(
-            children: [
-              Text(
-                isOnline ? show : '$show (offline)',
-                style: TextStyle(
-                  overflow: TextOverflow.fade,
-                  fontStyle: FontStyle.italic,
-                  decoration: TextDecoration.underline,
-                  color: Colors.black54,
-                ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              isOnline ? show : '$show (offline)',
+              style: const TextStyle(
+                overflow: TextOverflow.fade,
+                fontStyle: FontStyle.italic,
+                decoration: TextDecoration.underline,
+                color: Colors.black54,
               ),
-              Container(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.17,
-                ),
-                width: MediaQuery.of(context).size.width,
-                child: isOnline
-                    ? display[chosen]
-                    : Column(
-                        children: [
-                          Icon(
-                            Icons.wifi_off_outlined,
-                            size: 140,
-                            color: const Color.fromARGB(134, 11, 57, 100),
-                          ),
-                          Text(
-                            " you are offline",
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ],
+            ),
+          ),
+          Divider(color: const Color.fromARGB(83, 167, 176, 206), thickness: 2),
+
+          Expanded(
+            child: isOnline
+                ? display[chosen]
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.wifi_off_outlined,
+                        size: 140,
+                        color: Color.fromARGB(134, 11, 57, 100),
                       ),
-              ),
-            ],
+                      const SizedBox(height: 24),
+                      const Text(
+                        " you are offline",
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
