@@ -118,9 +118,7 @@ class _HomeState extends State<Home> {
                   decoration: BoxDecoration(
                     image: isOnline
                         ? DecorationImage(
-                            image: NetworkImage(
-                              "https://media.istockphoto.com/id/943322510/photo/bookstore-public-old-library-creativity-concept.jpg?s=1024x1024&w=is&k=20&c=dgRM-M_Y4nwO4ZymMz8VYmafNCtvypG_ROeA6mNh3Cs=",
-                            ),
+                            image: AssetImage("lib/assets/books.jpg"),
                             fit: BoxFit.cover,
                           )
                         : DecorationImage(image: NetworkImage("")),
@@ -160,9 +158,7 @@ class _HomeState extends State<Home> {
                   decoration: BoxDecoration(
                     image: isOnline
                         ? DecorationImage(
-                            image: NetworkImage(
-                              "https://media.istockphoto.com/id/1285965933/photo/audiobooks-concept.jpg?s=1024x1024&w=is&k=20&c=5W_usVS6XBX3V1DM8Q3NKQsXvEG13Yh0znl9_dv4zsU=",
-                            ),
+                            image: AssetImage("lib/assets/ab.jpg"),
                             fit: BoxFit.cover,
                           )
                         : DecorationImage(image: NetworkImage("")),
@@ -181,7 +177,7 @@ class _HomeState extends State<Home> {
                         size: 30,
                       ),
                       Text(
-                        " Audiobooks ",
+                        " AudioBooks ",
                         style: TextStyle(
                           background: Paint()..color = Colors.black26,
 
@@ -203,9 +199,7 @@ class _HomeState extends State<Home> {
                   decoration: BoxDecoration(
                     image: isOnline
                         ? DecorationImage(
-                            image: NetworkImage(
-                              "https://media.istockphoto.com/id/1490665488/photo/portrait-of-a-female-doctor-talking-to-the-camera-in-online-care.jpg?s=1024x1024&w=is&k=20&c=XjQu8IEh_UODUA2h0ZxnxGp9jMY1l7AZdORsXOQ20sg=",
-                            ),
+                            image: AssetImage("lib/assets/video.jpg"),
                             fit: BoxFit.cover,
                           )
                         : DecorationImage(image: NetworkImage("")),

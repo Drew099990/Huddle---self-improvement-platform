@@ -46,6 +46,8 @@ class _JournalState extends State<Community> {
     });
   }
 
+  DateTime date = DateTime.timestamp();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,6 +114,7 @@ class _JournalState extends State<Community> {
                           controller: _post,
                           enabled: true,
                           decoration: InputDecoration(
+                            suffixIcon: Icon(Icons.language_outlined),
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
@@ -186,32 +189,26 @@ class _JournalState extends State<Community> {
                 padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    Text(
-                      "William",
-                      style: TextStyle(
-                        fontFamily: "PrimaryFont",
-                        fontFamilyFallback: ["FallbackFont1", "sans-serif"],
-                        letterSpacing: 1,
-                        fontSize: 15,
-                        decoration: TextDecoration.underline,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                     SizedBox(height: 4),
                     Text(
                       "$post",
                       style: TextStyle(
                         letterSpacing: 2,
                         fontStyle: FontStyle.italic,
+                        fontSize: 15,
                       ),
                     ),
-
+                    SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "12.2.3",
-                          style: TextStyle(),
+                          "~william",
+                          style: TextStyle(fontSize: 10, color: Colors.black54),
+                        ),
+                        Text(
+                          "$date",
+                          style: TextStyle(fontSize: 10, color: Colors.black54),
                           textAlign: TextAlign.right,
                         ),
                       ],

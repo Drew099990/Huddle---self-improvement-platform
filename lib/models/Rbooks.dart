@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
+import "../screens/Journal.dart";
 
 class Rbooks extends StatelessWidget {
   Rbooks({super.key, required this.book});
@@ -46,7 +47,37 @@ class Rbooks extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Todays Daily Read",
+              style: TextStyle(
+                color: Colors.white60,
+                overflow: TextOverflow.clip,
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white60, width: 2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => Journal()),
+                  );
+                },
+                child: Icon(
+                  Icons.book_outlined,
+                  color: const Color.fromARGB(255, 23, 59, 68),
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: const Color.fromARGB(129, 87, 131, 116),
       ),
       body: SafeArea(
@@ -70,7 +101,7 @@ class Rbooks extends StatelessWidget {
                 style: TextStyle(
                   overflow: TextOverflow.visible,
                   letterSpacing: 2,
-                  fontSize: 22,
+                  fontSize: 25,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -86,7 +117,7 @@ class Rbooks extends StatelessWidget {
                   background: Paint()..color = Color.fromARGB(19, 87, 131, 116),
 
                   fontSize: 16,
-                  color: Colors.black87,
+                  color: const Color.fromARGB(118, 0, 0, 0),
                 ),
               ),
               const SizedBox(height: 20),
@@ -114,7 +145,10 @@ class Rbooks extends StatelessWidget {
                           const SizedBox(width: 8),
                           const Text(
                             'Read (in-app)',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
@@ -145,12 +179,15 @@ class Rbooks extends StatelessWidget {
                           width: 2,
                         ),
                       ),
-                      child: const Text('Open Externally'),
+                      child: const Text(
+                        'Open Externally',
+                        style: TextStyle(color: Color.fromARGB(117, 0, 0, 0)),
+                      ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               Text(
                 "powered by sleepy panda",
                 textAlign: TextAlign.center,

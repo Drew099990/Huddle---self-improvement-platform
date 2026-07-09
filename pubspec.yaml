@@ -69,6 +69,9 @@ flutter:
   assets:
     - lib/assets/show.png
     - lib/assets/appbar.jpg
+    - lib/assets/books.jpg
+    - lib/assets/ab.jpg
+    - lib/assets/video.jpg
     - assets/hud6.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

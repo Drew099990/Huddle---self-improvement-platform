@@ -46,7 +46,11 @@ class _JournalState extends State<Journal> {
           children: [
             Column(
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.12),
+                Icon(
+                  Icons.menu_book_outlined,
+                  size: 150,
+                  color: const Color.fromARGB(221, 11, 52, 71),
+                ),
                 Container(
                   padding: EdgeInsets.all(
                     MediaQuery.of(context).size.width * 0.05,
@@ -144,7 +148,10 @@ class _JournalState extends State<Journal> {
                     padding: EdgeInsets.fromLTRB(25, 10, 25, 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(width: 3),
+                      border: Border.all(
+                        width: 3,
+                        color: const Color.fromARGB(157, 2, 54, 66),
+                      ),
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
 
@@ -157,7 +164,6 @@ class _JournalState extends State<Journal> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],
@@ -170,7 +176,10 @@ class _JournalState extends State<Journal> {
                     padding: EdgeInsets.fromLTRB(25, 10, 25, 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(width: 3),
+                      border: Border.all(
+                        width: 3,
+                        color: const Color.fromARGB(157, 2, 54, 66),
+                      ),
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
 
@@ -182,7 +191,6 @@ class _JournalState extends State<Journal> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],

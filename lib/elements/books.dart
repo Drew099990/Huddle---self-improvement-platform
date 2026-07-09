@@ -10,7 +10,7 @@ class Books extends StatelessWidget {
       "category": "mental health",
       "image":
           "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80",
-      "link": "https://example.com/mindful-momentum",
+      "link": "https://sleepypanda.vercel.app",
     },
     {
       "title": "Stronger Every Morning",
@@ -333,6 +333,7 @@ class Books extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(137, 0, 0, 0),
                           fontSize: 14,
                         ),
                       ),

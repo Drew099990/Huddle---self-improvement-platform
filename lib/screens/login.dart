@@ -198,11 +198,11 @@ class _LoginState extends State<Login> {
                       }
                     },
                     child: AnimatedContainer(
-                      duration: Duration(seconds: 3),
+                      duration: Duration(seconds: 4),
                       decoration: BoxDecoration(
                         color: not_Loading
                             ? const Color.fromARGB(255, 4, 57, 65)
-                            : const Color.fromARGB(157, 4, 57, 65),
+                            : const Color.fromARGB(255, 201, 203, 204),
                       ),
                       padding: EdgeInsets.all(10),
                       width: MediaQuery.of(context).size.width * 0.6,
