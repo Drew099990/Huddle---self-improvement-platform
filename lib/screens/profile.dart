@@ -1,17 +1,45 @@
-import "package:flutter/material.dart";
-import "package:url_launcher/url_launcher.dart";
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import "package:hive_flutter/hive_flutter.dart";
+
 // Redesigned profile page
+String? profileImagePath;
 
 class Profile extends StatefulWidget {
-  const Profile({super.key});
-
+  @override
   @override
   State<Profile> createState() => _ProfileState();
 }
 
 class _ProfileState extends State<Profile> {
-  final String avatarUrl =
-      "https://media.istockphoto.com/id/1285965933/photo/audiobooks-concept.jpg?s=1024x1024&w=is&k=20&c=5W_usVS6XBX3V1DM8Q3NKQsXvEG13Yh0znl9_dv4zsU=";
+  String? _selectedImagePath;
+  late Box _box;
+  void initState() {
+    _setup();
+  }
+
+  void _setup() async {
+    await Hive.initFlutter();
+    _box = await Hive.openBox('profilepic');
+  }
+
+  Future<void> _pickProfileImage() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+
+    if (result != null) {
+      setState(() {
+        print("Selected image path: ${result.files.single.path}");
+        _selectedImagePath = result.files.single.path!;
+        _box.put('profileImagePath', _selectedImagePath);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +49,7 @@ class _ProfileState extends State<Profile> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color.fromARGB(232, 4, 41, 44),
+        backgroundColor: const Color.fromARGB(150, 4, 41, 44),
         centerTitle: true,
         title: Text(
           'Personal view',
@@ -61,7 +89,8 @@ class _ProfileState extends State<Profile> {
                       ),
                       child: CircleAvatar(
                         radius: 56,
-                        backgroundImage: NetworkImage(avatarUrl),
+                        backgroundImage: AssetImage("lib/assets/ab.jpg"),
+
                         backgroundColor: Colors.grey[200],
                       ),
                     ),
@@ -70,7 +99,7 @@ class _ProfileState extends State<Profile> {
                     right: 16,
                     bottom: -30,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: _pickProfileImage,
                       style: ElevatedButton.styleFrom(
                         elevation: 2,
                         shape: RoundedRectangleBorder(
@@ -124,18 +153,88 @@ class _ProfileState extends State<Profile> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildStatCard(
-                          'Active days',
-                          '8',
+                          'day installed',
+                          '8 days ago',
                           Icons.calendar_today,
                           size.width,
                         ),
-                        _buildStatCard('Journal', '5', Icons.book, size.width),
-                        _buildStatCard('Posts', '4', Icons.forum, size.width),
+                        _buildStatCard('Journal', '5 ', Icons.book, size.width),
+                        _buildStatCard('Posts', '4 ', Icons.forum, size.width),
                       ],
                     ),
 
-                    SizedBox(height: 20),
-
+                    SizedBox(height: 20), Divider(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          onPressed: () {},
+                          icon: Column(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(132, 29, 77, 54),
+                                  border: Border.all(width: 2),
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Icon(Icons.favorite_outline_outlined),
+                              ),
+                              Text(
+                                "favorites",
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: Column(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(
+                                    218,
+                                    180,
+                                    185,
+                                    189,
+                                  ),
+                                  border: Border.all(width: 2),
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Icon(Icons.group_outlined),
+                              ),
+                              Text(
+                                "broadcast",
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: Column(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(132, 29, 77, 54),
+                                  border: Border.all(width: 2),
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Icon(Icons.gamepad_outlined),
+                              ),
+                              Text(
+                                "mini games",
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Divider(height: 16),
                     // Actions
                     // Recent activity header
                     Text(
@@ -152,7 +251,7 @@ class _ProfileState extends State<Profile> {
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       itemCount: 3,
-                      separatorBuilder: (_, __) => Divider(height: 16),
+                      separatorBuilder: (_, _) => Divider(height: 16),
                       itemBuilder: (context, index) {
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
@@ -180,17 +279,17 @@ class _ProfileState extends State<Profile> {
                         color: Colors.grey[50],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.grey.withOpacity(0.12),
+                          color: Colors.grey.withValues(alpha: 0.12),
                         ),
                       ),
                       child: InkWell(
                         onTap: () async {
-                          final sleepypanda = "https://sleepypanda.vercel.app";
+                          final sleepypanda = 'https://sleepypanda.vercel.app';
 
-                          final Link = Uri.tryParse(sleepypanda);
+                          final link = Uri.tryParse(sleepypanda);
 
-                          final webview = await launchUrl(
-                            Link!,
+                          await launchUrl(
+                            link!,
                             mode: LaunchMode.inAppWebView,
                           ); // Handle footer tap
                         },
@@ -259,7 +358,11 @@ class _ProfileState extends State<Profile> {
             SizedBox(height: 8),
             Text(
               value,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: const Color.fromARGB(172, 34, 34, 34),
+              ),
             ),
             SizedBox(height: 4),
             Text(

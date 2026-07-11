@@ -116,6 +116,13 @@ class _HomeState extends State<Home> {
                   width: 70,
                   margin: EdgeInsets.only(top: 10),
                   decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                     image: isOnline
                         ? DecorationImage(
                             image: AssetImage("lib/assets/books.jpg"),
@@ -126,7 +133,7 @@ class _HomeState extends State<Home> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: const Color.fromARGB(160, 64, 80, 102),
-                      width: 4,
+                      width: 3,
                     ),
                   ),
                   child: Column(
@@ -136,13 +143,17 @@ class _HomeState extends State<Home> {
                         color: isOnline ? Colors.white : Colors.black54,
                         size: 30,
                       ),
-                      Text(
-                        "Books",
-                        style: TextStyle(
-                          background: Paint()..color = Colors.black26,
-                          fontSize: 20,
-                          color: isOnline ? Colors.white : Colors.black54,
-                          fontWeight: FontWeight.bold,
+                      ClipRRect(
+                        borderRadius: BorderRadiusGeometry.circular(10),
+
+                        child: Text(
+                          "Books",
+                          style: TextStyle(
+                            background: Paint()..color = Colors.black26,
+                            fontSize: 20,
+                            color: isOnline ? Colors.white : Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -156,6 +167,14 @@ class _HomeState extends State<Home> {
                   height: 70,
                   padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
                   decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+
                     image: isOnline
                         ? DecorationImage(
                             image: AssetImage("lib/assets/ab.jpg"),
@@ -166,7 +185,7 @@ class _HomeState extends State<Home> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: const Color.fromARGB(160, 64, 80, 102),
-                      width: 4,
+                      width: 3,
                     ),
                   ),
                   child: Column(
@@ -176,14 +195,18 @@ class _HomeState extends State<Home> {
                         color: isOnline ? Colors.white : Colors.black54,
                         size: 30,
                       ),
-                      Text(
-                        " AudioBooks ",
-                        style: TextStyle(
-                          background: Paint()..color = Colors.black26,
+                      ClipRRect(
+                        borderRadius: BorderRadiusGeometry.circular(10),
 
-                          fontSize: 15,
-                          color: isOnline ? Colors.white : Colors.black54,
-                          fontWeight: FontWeight.w900,
+                        child: Text(
+                          " AudioBooks ",
+                          style: TextStyle(
+                            background: Paint()..color = Colors.black26,
+
+                            fontSize: 15,
+                            color: isOnline ? Colors.white : Colors.black54,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ],
@@ -197,6 +220,13 @@ class _HomeState extends State<Home> {
                   height: 70,
                   width: 75,
                   decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                     image: isOnline
                         ? DecorationImage(
                             image: AssetImage("lib/assets/video.jpg"),
@@ -208,7 +238,7 @@ class _HomeState extends State<Home> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: const Color.fromARGB(160, 64, 80, 102),
-                      width: 4,
+                      width: 3,
                     ),
                   ),
                   child: Column(
@@ -218,14 +248,18 @@ class _HomeState extends State<Home> {
                         color: isOnline ? Colors.white : Colors.black54,
                         size: 30,
                       ),
-                      Text(
-                        "Videos",
-                        style: TextStyle(
-                          background: Paint()..color = Colors.black26,
+                      ClipRRect(
+                        borderRadius: BorderRadiusGeometry.circular(10),
 
-                          fontSize: 20,
-                          color: isOnline ? Colors.white : Colors.black54,
-                          fontWeight: FontWeight.bold,
+                        child: Text(
+                          "Videos",
+                          style: TextStyle(
+                            background: Paint()..color = Colors.black26,
+
+                            fontSize: 20,
+                            color: isOnline ? Colors.white : Colors.black54,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -249,7 +283,10 @@ class _HomeState extends State<Home> {
               ),
             ),
           ),
-          Divider(color: const Color.fromARGB(83, 167, 176, 206), thickness: 2),
+          Divider(
+            color: const Color.fromARGB(113, 167, 176, 206),
+            thickness: 2,
+          ),
 
           Expanded(
             child: isOnline

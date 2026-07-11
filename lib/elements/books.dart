@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import "../models/Rbooks.dart";
+import "../subpages/readbook.dart";
 
 class Books extends StatelessWidget {
   final List<Map<String, String>> booksZ = [
@@ -290,13 +290,13 @@ class Books extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 color: const Color.fromARGB(118, 64, 80, 102),
-                width: 6,
+                width: 3,
               ),
               color: const Color.fromARGB(255, 201, 203, 204),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.3),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),

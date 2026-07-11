@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import "./screens/home.dart";
 import "./screens/Journal.dart";
-import "./screens/community.dart";
+import "screens/reset.dart";
 import "./screens/profile.dart";
 import "package:Huddle/screens/login.dart";
 import "package:Huddle/screens/testing.dart";
@@ -20,7 +20,12 @@ class _MyAppState extends State<MyApp> {
 
   bool loggedIN = false;
 
-  List<Widget> _PAGES = <Widget>[Home(), Journal(), Community(), Profile()];
+  final List<Widget> _PAGES = <Widget>[
+    Home(),
+    Journal(),
+    Community(),
+    Profile(),
+  ];
 
   void _dataFromLogin(bool status) {
     setState(() {
@@ -61,8 +66,8 @@ class _MyAppState extends State<MyApp> {
                     label: 'Journal',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.people),
-                    label: 'Community',
+                    icon: Icon(Icons.today_outlined),
+                    label: 'Tasks',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.person),

@@ -1,6 +1,7 @@
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "../screens/login.dart";
-import "../screens/profile.dart";
 
 class Register extends StatefulWidget {
   const Register({super.key, required this.onRegister});
@@ -86,7 +87,7 @@ class _LoginState extends State<Register> {
                     ),
                   ),
                   SizedBox(height: 12),
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.80,
                     height: 70,
                     child: TextField(
@@ -95,7 +96,7 @@ class _LoginState extends State<Register> {
                       decoration: InputDecoration(
                         hintText: " username",
                         counter: Text(
-                          "$_userCounter",
+                          _userCounter,
                           style: TextStyle(
                             color: user_valid
                                 ? Colors.black54
@@ -121,7 +122,7 @@ class _LoginState extends State<Register> {
                       decoration: InputDecoration(
                         hintText: " email",
                         counter: Text(
-                          "$_emailCounter",
+                          _emailCounter,
                           style: TextStyle(
                             color: email_valid
                                 ? Colors.black54
@@ -138,7 +139,7 @@ class _LoginState extends State<Register> {
                     ),
                   ),
                   SizedBox(height: 10),
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.80,
                     height: 70,
                     child: TextField(
@@ -151,7 +152,7 @@ class _LoginState extends State<Register> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         counter: Text(
-                          "$_passCounter",
+                          _passCounter,
                           style: TextStyle(
                             color: password_valid
                                 ? Colors.black54
@@ -191,27 +192,52 @@ class _LoginState extends State<Register> {
                         setState(() {
                           user_valid = false;
                           _userCounter = "username is missing.";
+                          Timer(Duration(seconds: 3), () {
+                            setState(() {
+                              loading = true;
+                              _userCounter = "username";
+                              user_valid = true;
+                            });
+                          });
                         });
                       }
                       if (_emailController.text.isEmpty) {
                         setState(() {
                           email_valid = false;
                           _emailCounter = "email is missing.";
+                          Timer(Duration(seconds: 3), () {
+                            setState(() {
+                              loading = true;
+                              _emailCounter = "email";
+                              email_valid = true;
+                            });
+                          });
                         });
                       }
                       if (_passController.text.isEmpty) {
                         setState(() {
                           password_valid = false;
                           _passCounter = "password is missing.";
+                          Timer(Duration(seconds: 3), () {
+                            setState(() {
+                              loading = true;
+                              _passCounter = "password";
+                              password_valid = true;
+                            });
+                          });
                         });
                       }
                     },
                     child: AnimatedContainer(
                       duration: Duration(seconds: 3),
                       decoration: BoxDecoration(
+                        borderRadius: loading
+                            ? BorderRadius.circular(0)
+                            : BorderRadius.circular(40),
+
                         color: loading
                             ? const Color.fromARGB(255, 4, 57, 65)
-                            : const Color.fromARGB(157, 4, 57, 65),
+                            : const Color.fromARGB(255, 201, 203, 204),
                       ),
                       padding: EdgeInsets.all(10),
                       width: MediaQuery.of(context).size.width * 0.6,

@@ -1,6 +1,5 @@
 import "dart:async";
 
-import "package:Huddle/screens/home.dart";
 import "package:flutter/material.dart";
 import "../screens/register.dart";
 
@@ -22,6 +21,8 @@ class _LoginState extends State<Login> {
   bool not_Loading = true;
   bool password_valid = true;
   bool username_valid = true;
+
+  double rad = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +85,7 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   SizedBox(height: 12),
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.80,
                     height: 70,
                     child: TextField(
@@ -93,7 +94,7 @@ class _LoginState extends State<Login> {
                       decoration: InputDecoration(
                         hintText: " username",
                         counter: Text(
-                          "$userCounter",
+                          userCounter,
                           style: TextStyle(
                             color: username_valid
                                 ? Colors.black54
@@ -110,7 +111,7 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   SizedBox(height: 10),
-                  Container(
+                  SizedBox(
                     width: MediaQuery.of(context).size.width * 0.80,
                     height: 70,
                     child: TextField(
@@ -123,7 +124,7 @@ class _LoginState extends State<Login> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         counter: Text(
-                          "$passwordCounter",
+                          passwordCounter,
                           style: TextStyle(
                             color: password_valid
                                 ? Colors.black54
@@ -200,6 +201,9 @@ class _LoginState extends State<Login> {
                     child: AnimatedContainer(
                       duration: Duration(seconds: 4),
                       decoration: BoxDecoration(
+                        borderRadius: not_Loading
+                            ? BorderRadius.circular(rad)
+                            : BorderRadius.circular(40),
                         color: not_Loading
                             ? const Color.fromARGB(255, 4, 57, 65)
                             : const Color.fromARGB(255, 201, 203, 204),
