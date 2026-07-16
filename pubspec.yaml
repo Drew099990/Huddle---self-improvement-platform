@@ -42,6 +42,7 @@ dependencies:
   hive_flutter: ^1.1.0
   url_launcher: ^6.3.2
   file_picker: ^11.0.2
+  sqflite: ^2.4.2+1
 
 
 dev_dependencies:
@@ -75,6 +76,7 @@ flutter:
     - lib/assets/ab.jpg
     - lib/assets/video.jpg
     - assets/hud6.png
+    - lib/assets/hud7.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -105,7 +107,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/hud6.png"
+  image_path: "lib/assets/hud7.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/hud6.png"
+  adaptive_icon_foreground: "lib/assets/hud7.png"
   

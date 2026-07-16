@@ -289,7 +289,7 @@ class Books extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(
-                color: const Color.fromARGB(118, 64, 80, 102),
+                color: const Color.fromARGB(118, 16, 42, 80),
                 width: 3,
               ),
               color: const Color.fromARGB(255, 201, 203, 204),
@@ -345,6 +345,7 @@ class Books extends StatelessWidget {
                           fontSize: 11,
                         ),
                       ),
+                      Divider(height: 1, color: Colors.black54),
                       const SizedBox(height: 8),
                       Text(
                         book['summary'] ?? '',

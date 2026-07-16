@@ -1,8 +1,8 @@
-import "dart:async";
+import 'dart:async';
+import 'dart:math' as math;
 
-import "package:flutter/material.dart";
-import "package:hive_flutter/hive_flutter.dart";
-//journal page
+import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 DateTime date = DateTime.now();
 String year = date.year.toString();
@@ -11,9 +11,7 @@ String day = date.day.toString().padLeft(2, '0');
 String hour = date.hour.toString().padLeft(2, '0');
 String minute = date.minute.toString().padLeft(2, '0');
 
-// Combine into your desired structure
-String formattedString = "$year-$month-$day $hour:$minute";
-// Output: 2026-07-09 15:45
+String formattedString = '$year-$month-$day ';
 
 class Community extends StatefulWidget {
   const Community({super.key});
@@ -23,38 +21,75 @@ class Community extends StatefulWidget {
 }
 
 class _PostCard {
-  _PostCard({required this.text, required this.createdAt});
+  _PostCard({
+    required this.title,
+    required this.text,
+    required this.remainingSeconds,
+    required this.updatedAt,
+  });
 
+  final String title;
   final String text;
-  final DateTime createdAt;
-  int remainingSeconds = 10;
+  int remainingSeconds;
+  DateTime updatedAt;
   double progressWidth = 200;
-  Timer? timer;
 }
 
 class _JournalState extends State<Community> {
-  int count = 0;
   late Box _box;
+  final TextEditingController _posttitle = TextEditingController();
+  final TextEditingController _post = TextEditingController();
+  String post = '';
+  int count = 0;
+  bool _allowOverLimit = false;
   final List<_PostCard> _generatedCards = [];
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _setupHive();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _syncCountdowns();
+        });
+      }
+    });
   }
 
   Future<void> _setupHive() async {
     await Hive.initFlutter();
     _box = await Hive.openBox('Huddle');
-    final savedCards = _box.get('postCards', defaultValue: <String>[]);
+    final savedCards = _box.get('postCards', defaultValue: <dynamic>[]);
 
     if (savedCards is List) {
-      setState(() {
-        _generatedCards.addAll(
-          savedCards.whereType<String>().map((value) => _PostCard(text: value, createdAt: DateTime.now())),
+      final restoredCards = savedCards.whereType<Map>().map((entry) {
+        final map = Map<String, dynamic>.from(entry);
+        final savedAt = DateTime.parse(map['updatedAt'] as String);
+        final elapsedSeconds = DateTime.now()
+            .difference(savedAt)
+            .inSeconds
+            .clamp(0, 24 * 60 * 60);
+        final remainingSeconds = math.max(
+          0,
+          (map['remainingSeconds'] as int) - elapsedSeconds,
         );
-        count = _generatedCards.length;
-      });
+
+        return _PostCard(
+          title: (map['title'] as String?) ?? 'Untitled',
+          text: map['text'] as String,
+          remainingSeconds: remainingSeconds,
+          updatedAt: DateTime.now(),
+        );
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _generatedCards.addAll(restoredCards);
+          count = _generatedCards.length;
+        });
+      }
     }
   }
 
@@ -66,57 +101,88 @@ class _JournalState extends State<Community> {
 
   void _startCount() {
     final value = _post.text.trim();
+    final title = _posttitle.text.trim();
     if (value.isEmpty) {
       return;
     }
 
-    if (_generatedCards.length >= 5) {
+    if (!_allowOverLimit && _generatedCards.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can create up to 5 cards only.')),
+        SnackBar(
+          backgroundColor: const Color.fromARGB(255, 37, 130, 167),
+          content: const Text(
+            'You can set up to 5 goals per day in free tier, see ya tommorrow for more.',
+            style: TextStyle(color: Colors.white),
+          ),
+          action: SnackBarAction(label: 'okay', onPressed: () {}),
+        ),
       );
       return;
     }
 
-    final card = _PostCard(text: value, createdAt: DateTime.now());
+    final card = _PostCard(
+      title: title.isNotEmpty ? title : 'Untitled',
+      text: value,
+      remainingSeconds: 24 * 60 * 60,
+      updatedAt: DateTime.now(),
+    );
 
-    setState(() {
-      post = value;
-      _generatedCards.add(card);
-      count = _generatedCards.length;
-    });
-
-    _saveCards();
-
-    card.timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        return;
-      }
-
+    post = value;
+    if (mounted) {
       setState(() {
-        if (card.remainingSeconds > 0) {
-          card.remainingSeconds--;
-          card.progressWidth = (card.remainingSeconds / 10) * 200;
-        } else {
-          timer.cancel();
-          _removeCard(card);
-        }
+        _generatedCards.add(card);
+        count = _generatedCards.length;
       });
-    });
-
+    }
+    _saveCards();
     _post.clear();
+    _posttitle.clear();
   }
 
   void _saveCards() {
-    final values = _generatedCards.map((card) => card.text).toList();
+    final values = _generatedCards.map((card) {
+      return {
+        'title': card.title,
+        'text': card.text,
+        'remainingSeconds': card.remainingSeconds,
+        'updatedAt': card.updatedAt.toIso8601String(),
+      };
+    }).toList();
     _box.put('postCards', values);
   }
 
-  void _removeCard(_PostCard card) {
-    setState(() {
-      _generatedCards.remove(card);
-      count = _generatedCards.length;
-    });
-    _saveCards();
+  void _syncCountdowns() {
+    final now = DateTime.now();
+    final remainingCards = <_PostCard>[];
+    var changed = false;
+
+    for (final card in _generatedCards) {
+      final elapsedSeconds = now.difference(card.updatedAt).inSeconds;
+      if (elapsedSeconds > 0) {
+        card.remainingSeconds = math.max(
+          0,
+          card.remainingSeconds - elapsedSeconds,
+        );
+        card.updatedAt = now;
+        card.progressWidth = (card.remainingSeconds / (24 * 60 * 60)) * 200;
+        changed = true;
+      }
+
+      if (card.remainingSeconds > 0) {
+        remainingCards.add(card);
+      } else {
+        changed = true;
+      }
+    }
+
+    if (remainingCards.length != _generatedCards.length || changed) {
+      setState(() {
+        _generatedCards.clear();
+        _generatedCards.addAll(remainingCards);
+        count = _generatedCards.length;
+      });
+      _saveCards();
+    }
   }
 
   void delete(int key) {
@@ -127,14 +193,17 @@ class _JournalState extends State<Community> {
     _box.put(key, value);
   }
 
-  final _post = TextEditingController();
-  String post = "";
+  String _formatDuration(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final secs = seconds % 60;
+    return '${hours.toString().padLeft(2, '0')}h ${minutes.toString().padLeft(2, '0')}m ${secs.toString().padLeft(2, '0')}s';
+  }
 
   @override
   void dispose() {
-    for (final card in _generatedCards) {
-      card.timer?.cancel();
-    }
+    _refreshTimer?.cancel();
+    _posttitle.dispose();
     _post.dispose();
     super.dispose();
   }
@@ -146,7 +215,7 @@ class _JournalState extends State<Community> {
       appBar: AppBar(
         elevation: 15,
         toolbarHeight: 70,
-        flexibleSpace: Image.asset("lib/assets/appbar.jpg", fit: BoxFit.cover),
+        flexibleSpace: Image.asset('lib/assets/appbar.jpg', fit: BoxFit.cover),
         title: Center(
           child: Container(
             height: 40,
@@ -154,11 +223,10 @@ class _JournalState extends State<Community> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
             ),
-            padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-            margin: EdgeInsets.all(30),
-
-            child: Text(
-              "HUDDLE",
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+            margin: const EdgeInsets.all(30),
+            child: const Text(
+              'HUDDLE',
               style: TextStyle(
                 letterSpacing: 5,
                 fontSize: 27,
@@ -168,63 +236,113 @@ class _JournalState extends State<Community> {
           ),
         ),
       ),
-
       body: SafeArea(
         child: ListView(
           children: [
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Column(
               children: [
-                Text(
-                  "Daily Reset",
+                const Text(
+                  'Daily Reset',
                   style: TextStyle(
                     letterSpacing: 3,
-                    color: const Color.fromARGB(221, 11, 49, 99),
+                    color: Color.fromARGB(221, 11, 49, 99),
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Container(
-                  margin: EdgeInsets.only(top: 10),
+                  margin: const EdgeInsets.only(top: 10),
                   width: MediaQuery.of(context).size.width * 0.80,
-                  child: TextField(
-                    autocorrect: true,
-                    controller: _post,
-                    enabled: true,
-                    decoration: InputDecoration(
-                      suffixIcon: Icon(Icons.language_outlined),
-                      border: OutlineInputBorder(
-                        gapPadding: 10,
-                        borderRadius: BorderRadius.circular(10),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 56,
+                        child: TextField(
+                          maxLines: 1,
+                          autocorrect: true,
+                          controller: _posttitle,
+                          enabled: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            suffixIcon: const Icon(Icons.language_outlined),
+                            border: OutlineInputBorder(
+                              gapPadding: 10,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            hintText: 'title',
+                            counterText: 'title',
+                          ),
+                        ),
                       ),
-                      hintText: "daily goals for the day?",
-                      counterText: '24 hours goals set ($count /5)',
-                    ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 56,
+                        child: TextField(
+                          autocorrect: true,
+                          controller: _post,
+                          enabled: true,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
+                            ),
+                            suffixIcon: const Icon(Icons.language_outlined),
+                            border: OutlineInputBorder(
+                              gapPadding: 10,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            hintText: 'daily goals for the day?',
+                            counterText:
+                                '24 hours goals set ($count /${_allowOverLimit ? '5+' : '5'})',
+                          ),
+                        ),
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text(
+                          'Bypass the 5-card daily limit',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        subtitle: const Text(
+                          'Enable this to add more than 5 cards today.',
+                        ),
+                        value: _allowOverLimit,
+                        onChanged: (value) {
+                          setState(() {
+                            _allowOverLimit = value;
+                          });
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 InkWell(
                   onTap: _startCount,
                   child: Container(
-                    padding: EdgeInsets.fromLTRB(25, 10, 25, 10),
+                    padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(width: 3),
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
-
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Icon(Icons.post_add_outlined, color: Colors.white60),
                         Text(
-                          "Start Count",
+                          'Start Count',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -237,19 +355,18 @@ class _JournalState extends State<Community> {
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
+            const Padding(
+              padding: EdgeInsets.all(10),
               child: Text(
-                "powered by sleepy panda",
+                'powered by sleepy panda',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.black45),
               ),
             ),
-            Divider(height: 2),
-
+            const Divider(height: 3),
             if (_generatedCards.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(6.0),
+              const Padding(
+                padding: EdgeInsets.all(6.0),
                 child: Text(
                   'Start the countdown to create your first card.',
                   textAlign: TextAlign.center,
@@ -262,17 +379,17 @@ class _JournalState extends State<Community> {
                   return Padding(
                     padding: const EdgeInsets.all(6.0),
                     child: Container(
-                      margin: EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(10),
                       width: MediaQuery.of(context).size.width * 0.80,
                       decoration: BoxDecoration(
                         color: const Color.fromARGB(66, 170, 193, 228),
                         border: Border.all(
-                          width: 2,
-                          color: const Color.fromARGB(184, 4, 42, 51),
+                          width: 6,
+                          color: const Color.fromARGB(115, 4, 20, 51),
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
                           Container(
@@ -283,7 +400,7 @@ class _JournalState extends State<Community> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           AnimatedContainer(
                             width: card.progressWidth,
                             duration: const Duration(seconds: 1),
@@ -295,20 +412,43 @@ class _JournalState extends State<Community> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadiusGeometry.circular(10),
+                            child: Text(
+                              " <" + card.title + "> ",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+
+                                background: Paint()
+                                  ..color = const Color.fromARGB(
+                                    115,
+                                    180,
+                                    198,
+                                    216,
+                                  ),
+                                color: const Color.fromARGB(221, 8, 30, 58),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
                           Text(
                             card.text,
-                            style: TextStyle(
+                            style: const TextStyle(
                               letterSpacing: 2,
                               fontStyle: FontStyle.italic,
                               fontSize: 15,
+                              color: Colors.black54,
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
+                              const Text(
                                 '~to Self',
                                 style: TextStyle(
                                   fontSize: 10,
@@ -316,8 +456,8 @@ class _JournalState extends State<Community> {
                                 ),
                               ),
                               Text(
-                                formattedString,
-                                style: TextStyle(
+                                '$year-$month-$day ',
+                                style: const TextStyle(
                                   fontSize: 10,
                                   color: Colors.black54,
                                 ),
@@ -325,9 +465,29 @@ class _JournalState extends State<Community> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 6),
+                          Container(
+                            decoration: BoxDecoration(
+                              border: BoxBorder.all(
+                                width: 2,
+                                color: const Color.fromARGB(31, 51, 116, 146),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          AnimatedContainer(
+                            width: card.progressWidth,
+                            duration: const Duration(seconds: 1),
+                            curve: Curves.linear,
+                            decoration: BoxDecoration(
+                              border: BoxBorder.all(
+                                width: 2,
+                                color: const Color.fromARGB(137, 51, 116, 146),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
                           Text(
-                            'Time left: ${card.remainingSeconds}s',
+                            'Time left: ${_formatDuration(card.remainingSeconds)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: card.remainingSeconds > 0
@@ -335,13 +495,14 @@ class _JournalState extends State<Community> {
                                   : Colors.redAccent,
                             ),
                           ),
+                          const Divider(height: 2),
                         ],
                       ),
                     ),
                   );
                 }).toList(),
               ),
-            Divider(height: 2),
+            const Divider(height: 2),
           ],
         ),
       ),

@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-
+import "../subpages/readentry.dart";
 //journal page
 
 class Journal extends StatefulWidget {
@@ -183,17 +183,24 @@ class _JournalState extends State<Journal> {
                       color: const Color.fromARGB(255, 15, 75, 105),
                     ),
 
-                    child: Row(
-                      children: [
-                        Icon(Icons.list_outlined, color: Colors.white60),
-                        Text(
-                          "show entries",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(
+                          context,
+                        ).push(MaterialPageRoute(builder: (_) => readentry()));
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.list_outlined, color: Colors.white60),
+                          Text(
+                            "show entries",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
