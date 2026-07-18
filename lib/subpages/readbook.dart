@@ -1,3 +1,4 @@
+import "package:Huddle/subpages/favorites.dart";
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
 import "../screens/Journal.dart";
@@ -65,12 +66,12 @@ class Rbooks extends StatelessWidget {
               ),
               child: InkWell(
                 onTap: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => Journal()),
+                    MaterialPageRoute(builder: (_) => Favorites()),
                   );
                 },
-                child: Icon(Icons.book_outlined, color: Colors.white60),
+                child: Icon(Icons.favorite_border, color: Colors.white60),
               ),
             ),
           ],

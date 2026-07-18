@@ -12,6 +12,7 @@ String hour = date.hour.toString().padLeft(2, '0');
 String minute = date.minute.toString().padLeft(2, '0');
 
 String formattedString = '$year-$month-$day ';
+String MessageShow = "Powered by Sleepy Panda";
 
 class Community extends StatefulWidget {
   const Community({super.key});
@@ -44,7 +45,6 @@ class _JournalState extends State<Community> {
   bool _allowOverLimit = false;
   final List<_PostCard> _generatedCards = [];
   Timer? _refreshTimer;
-
   @override
   void initState() {
     super.initState();
@@ -305,6 +305,7 @@ class _JournalState extends State<Community> {
                       ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
+                        activeColor: const Color.fromARGB(255, 15, 58, 99),
                         title: const Text(
                           'Bypass the 5-card daily limit',
                           style: TextStyle(fontSize: 12),
@@ -355,13 +356,30 @@ class _JournalState extends State<Community> {
                 ),
               ],
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(10),
-              child: Text(
-                'powered by sleepy panda',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black45),
-              ),
+              child: _generatedCards.isEmpty
+                  ? Text(
+                      MessageShow,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.black45),
+                    )
+                  : Container(
+                      padding: EdgeInsets.all(10),
+                      margin: EdgeInsets.all(20),
+
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          width: 2,
+                          color: const Color.fromARGB(31, 87, 114, 150),
+                        ),
+                      ),
+                      child: Text(
+                        '"Your results wont come from waking up at 5 AM. Theyll come from doing what you said you would do, every single day." ',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black45),
+                      ),
+                    ),
             ),
             const Divider(height: 3),
             if (_generatedCards.isEmpty)

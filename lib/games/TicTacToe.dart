@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import "../subpages/minigame.dart";
 
 class TicTacToeApp extends StatelessWidget {
   const TicTacToeApp({super.key});
@@ -70,6 +71,16 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.people_alt_rounded,
                   label: 'Play vs Friend',
                   onTap: () => _startGame(context, GameMode.vsPlayer),
+                ),
+                const SizedBox(height: 20),
+
+                _ModeButton(
+                  icon: Icons.arrow_back_ios_new_outlined,
+                  label: 'Exit',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MiniGames()),
+                  ),
                 ),
               ],
             ),

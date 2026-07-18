@@ -58,9 +58,26 @@ class _ProfileState extends State<Profile> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadiusGeometry.circular(10),
+          ),
           alignment: Alignment.center,
           elevation: 10,
-          title: Text("Global Board"),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Global Board"),
+              IconButton(
+                icon: Icon(
+                  Icons.cancel_outlined,
+                  color: const Color.fromARGB(115, 2, 36, 49),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
           contentPadding: EdgeInsets.all(5),
           actions: [
             TextField(
@@ -73,7 +90,7 @@ class _ProfileState extends State<Profile> {
               margin: EdgeInsets.all(10),
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(146, 29, 61, 165),
+                color: const Color.fromARGB(146, 8, 59, 46),
                 border: Border.all(),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -132,7 +149,7 @@ class _ProfileState extends State<Profile> {
         title: const Text(
           'Personal view',
           style: TextStyle(
-            color: Color.fromARGB(153, 25, 71, 155),
+            color: Color.fromARGB(69, 25, 70, 155),
             letterSpacing: 3,
             fontWeight: FontWeight.w600,
           ),
