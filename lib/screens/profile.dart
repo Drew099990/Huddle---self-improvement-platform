@@ -77,7 +77,7 @@ class _ProfileState extends State<Profile> {
                 border: Border.all(),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Container(
+              child: SizedBox(
                 width: 135,
                 child: InkWell(
                   onTap: () {
@@ -374,9 +374,8 @@ class _ProfileState extends State<Profile> {
                           final uri = Uri.parse(
                             'https://sleepypanda.vercel.app',
                           );
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.inAppWebView);
-                          }
+
+                          await launchUrl(uri, mode: LaunchMode.inAppWebView);
                         },
                         child: const Column(
                           children: [

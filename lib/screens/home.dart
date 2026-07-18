@@ -273,13 +273,19 @@ class _HomeState extends State<Home> {
           Divider(color: const Color.fromARGB(83, 167, 176, 206), thickness: 2),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              isOnline ? show : '$show (offline)',
-              style: const TextStyle(
-                overflow: TextOverflow.fade,
-                fontStyle: FontStyle.italic,
-                decoration: TextDecoration.underline,
-                color: Colors.black54,
+            child: ClipRRect(
+              borderRadius: BorderRadiusGeometry.circular(10),
+              child: Text(
+                isOnline
+                    ? "------------ $show --------------"
+                    : '$show (offline)',
+                style: TextStyle(
+                  overflow: TextOverflow.fade,
+                  fontStyle: FontStyle.italic,
+                  background: Paint()
+                    ..color = const Color.fromARGB(19, 161, 184, 196),
+                  color: Colors.black54,
+                ),
               ),
             ),
           ),

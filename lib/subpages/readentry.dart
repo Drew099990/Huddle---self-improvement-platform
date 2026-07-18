@@ -32,7 +32,17 @@ class readentry extends StatelessWidget {
         ),
       ),
 
-      body: Container(child: Center(child: Text("entry"))),
+      body: Container(
+        child: Center(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text("entry"),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -4,7 +4,6 @@ import "./screens/Journal.dart";
 import "screens/reset.dart";
 import "./screens/profile.dart";
 import "package:Huddle/screens/login.dart";
-import "package:Huddle/screens/testing.dart";
 
 void main() => runApp(const MyApp());
 

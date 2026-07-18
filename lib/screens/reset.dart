@@ -416,7 +416,7 @@ class _JournalState extends State<Community> {
                           ClipRRect(
                             borderRadius: BorderRadiusGeometry.circular(10),
                             child: Text(
-                              " <" + card.title + "> ",
+                              " <${card.title}> ",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 letterSpacing: 1.5,
