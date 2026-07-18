@@ -39,6 +39,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white60,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -49,12 +50,16 @@ class HomeScreen extends StatelessWidget {
                 const Icon(
                   Icons.grid_3x3_rounded,
                   size: 90,
-                  color: Color(0xFF6C63FF),
+                  color: Color.fromARGB(255, 14, 53, 85),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Tic Tac Toe',
-                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(115, 4, 40, 46),
+                  ),
                 ),
                 const Text(
                   'Best of 3 Series',
@@ -179,6 +184,7 @@ class _GameScreenState extends State<GameScreen> {
 
   void _computerMove() {
     if (roundOver) return;
+    if (!mounted) return;
     final move = _bestComputerMove();
     if (move != -1) _placeMark(move);
   }
@@ -255,7 +261,22 @@ class _GameScreenState extends State<GameScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
+      // IMPORTANT: keep the dialog on THIS screen's navigator rather than
+      // the app's root navigator. This game screen is nested inside the
+      // larger app (see MiniGames), which has its own navigator stack.
+      // showDialog defaults to useRootNavigator: true, which pushes the
+      // dialog onto a DIFFERENT navigator than the one GameScreen lives on.
+      // When that happens, calling Navigator.pop(context) from inside the
+      // dialog (using the outer GameScreen context) doesn't close the
+      // dialog at all — it pops the topmost route of the *local* navigator
+      // instead, which is GameScreen itself, kicking the player back to
+      // HomeScreen while the dialog (stuck on the root navigator) stays on
+      // screen, unresponsive. Setting useRootNavigator: false, and popping
+      // with the dialog's own context, keeps both operations on the same
+      // navigator so "Next Round" actually closes the dialog and advances
+      // the round instead of exiting the game.
+      useRootNavigator: false,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         title: Text(title),
         content: Text(
@@ -267,7 +288,7 @@ class _GameScreenState extends State<GameScreen> {
           if (!seriesOver)
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop(); // close the dialog only
                 _nextRound();
               },
               child: const Text('Next Round'),
@@ -275,15 +296,15 @@ class _GameScreenState extends State<GameScreen> {
           if (seriesOver) ...[
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop(); // close the dialog only
                 _resetSeries();
               },
               child: const Text('Play Again'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop(); // close the dialog
+                Navigator.of(context).pop(); // then leave the game screen
               },
               child: const Text('Home'),
             ),

@@ -306,7 +306,7 @@ class _GameScreenState extends State<GameScreen>
                 if (_status == GameStatus.ready)
                   _buildOverlay(
                     fg: fg,
-                    title: 'DINO JUMP',
+                    title: 'CHicken Ninja',
                     subtitle: 'Tap to start\nTap to jump over the cacti',
                   ),
                 if (_status == GameStatus.gameOver)
