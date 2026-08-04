@@ -1,50 +1,102 @@
 import "package:Huddle/subpages/favorites.dart";
 import "package:flutter/material.dart";
 import 'package:url_launcher/url_launcher.dart';
-import "../screens/Journal.dart";
+import 'book_viewer.dart';
 
-class Rbooks extends StatelessWidget {
+class Rbooks extends StatefulWidget {
   const Rbooks({super.key, required this.book});
 
   final Map<String, String> book;
 
+  @override
+  State<Rbooks> createState() => _RbooksState();
+}
+
+class _RbooksState extends State<Rbooks> {
+  bool favorite = false;
+
   Future<void> _openLink(BuildContext context) async {
-    final link = book['link'] ?? '';
+    final messenger = ScaffoldMessenger.of(context);
+    final link = widget.book['link'] ?? '';
     if (link.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Book currently unavailable')),
+      messenger.showSnackBar(
+        const SnackBar(
+          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+
+          content: Text('Book currently unavailable'),
+        ),
       );
       return;
     }
 
-    final uri = Uri.tryParse(link);
+    Uri? uri = Uri.tryParse(link);
+    if (uri == null || uri.scheme.isEmpty) {
+      uri = Uri.tryParse('https://$link');
+    }
     if (uri == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid link')));
+      messenger.showSnackBar(
+        const SnackBar(
+          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+          content: Text('Invalid link'),
+        ),
+      );
       return;
     }
 
     try {
+      final lowerLink = link.toLowerCase();
+      final isPdf =
+          uri.path.toLowerCase().endsWith('.pdf') || lowerLink.contains('.pdf');
+      final isYouTube =
+          uri.host.contains('youtube.com') || uri.host.contains('youtu.be');
+
+      if (isPdf) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PdfViewerPage(url: uri.toString())),
+        );
+        return;
+      }
+
+      if (isYouTube) {
+        final launched = await launchUrl(uri, mode: LaunchMode.inAppWebView);
+        if (!launched) {
+          final launchedExternal = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+          if (!launchedExternal) {
+            messenger.showSnackBar(
+              const SnackBar(content: Text('Could not open YouTube link')),
+            );
+          }
+        }
+        return;
+      }
+
       final launched = await launchUrl(uri, mode: LaunchMode.inAppWebView);
       if (!launched) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Could not open book')));
+        final launchedExternal = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launchedExternal) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Could not open book')),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error opening link: $e')));
+      messenger.showSnackBar(SnackBar(content: Text('Error opening link: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = book['title'] ?? '';
-    final image = book['image'] ?? '';
-    final category = book['category'] ?? '';
-    final summary = book['summary'] ?? '';
+    final title = widget.book['title'] ?? '';
+    final image = widget.book['image'] ?? '';
+    final category = widget.book['category'] ?? '';
+    final summary = widget.book['summary'] ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -117,9 +169,55 @@ class Rbooks extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  category.toUpperCase(),
-                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      category.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => {
+                        setState(() {
+                          favorite = !favorite;
+
+                          if (favorite) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Added to Favorites"),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Removed from Favorites"),
+                              ),
+                            );
+                          }
+                        }),
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color.fromARGB(153, 59, 90, 79),
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          favorite ? Icons.favorite : Icons.favorite_border,
+                          color: favorite
+                              ? const Color.fromARGB(255, 172, 71, 63)
+                              : Colors.grey,
+                          size: 30,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -169,14 +267,17 @@ class Rbooks extends StatelessWidget {
 
                     InkWell(
                       onTap: () async {
-                        final link = book['link'] ?? '';
-                        final uri = Uri.tryParse(link);
-                        if (uri != null) {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: const Color.fromARGB(
+                              148,
+                              34,
+                              39,
+                              58,
+                            ),
+                            content: Text("Currently Unavailable"),
+                          ),
+                        );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -192,7 +293,7 @@ class Rbooks extends StatelessWidget {
                           ),
                         ),
                         child: const Text(
-                          'Open Externally',
+                          'Leave Comment',
                           style: TextStyle(color: Color.fromARGB(117, 0, 0, 0)),
                         ),
                       ),

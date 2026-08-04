@@ -1,4 +1,3 @@
-import 'package:Huddle/screens/Journal.dart';
 import 'package:flutter/material.dart';
 import "../subpages/favorites.dart";
 import "../games/TicTacToe.dart";
@@ -125,7 +124,10 @@ class MiniGames extends StatelessWidget {
                 );
               },
             ),
+            Divider(height: 2, color: Colors.amber),
 
+            Text("Upgrade to premium to unlock more games"),
+            Divider(height: 2, color: Colors.amber),
             const SizedBox(height: 16),
             games(
               image: "https://cdn-icons-png.flaticon.com/512/4363/4363846.png",

@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "../subpages/readentry.dart";
-//journal page
+import "../helpers/journal_database.dart";
 
 class Journal extends StatefulWidget {
   const Journal({super.key});
@@ -10,6 +10,68 @@ class Journal extends StatefulWidget {
 }
 
 class _JournalState extends State<Journal> {
+  final _gratitudeController = TextEditingController();
+  final _improvementController = TextEditingController();
+  final _goalsController = TextEditingController();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _gratitudeController.dispose();
+    _improvementController.dispose();
+    _goalsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveEntry() async {
+    final gratitude = _gratitudeController.text.trim();
+    final improvement = _improvementController.text.trim();
+    final goals = _goalsController.text.trim();
+
+    if (gratitude.isEmpty || improvement.isEmpty || goals.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all journal fields.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await JournalDatabase.instance.create(
+        JournalEntry(
+          gratitude: gratitude,
+          improvement: improvement,
+          goals: goals,
+        ),
+      );
+
+      _gratitudeController.clear();
+      _improvementController.clear();
+      _goalsController.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+          content: Text('Journal entry saved successfully.'),
+        ),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+          content: Text('Failed to save entry: $error'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,13 +106,9 @@ class _JournalState extends State<Journal> {
       body: SafeArea(
         child: ListView(
           children: [
+            SizedBox(height: 20),
             Column(
               children: [
-                Icon(
-                  Icons.menu_book_outlined,
-                  size: 150,
-                  color: const Color.fromARGB(221, 11, 52, 71),
-                ),
                 Container(
                   padding: EdgeInsets.all(
                     MediaQuery.of(context).size.width * 0.05,
@@ -77,59 +135,54 @@ class _JournalState extends State<Journal> {
                         margin: EdgeInsets.only(top: 10),
                         width: MediaQuery.of(context).size.width * 0.80,
                         child: TextField(
+                          controller: _gratitudeController,
                           autocorrect: true,
-
-                          enabled: true,
+                          maxLines: 3,
                           decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.favorite_outline),
-
+                            prefixIcon: const Icon(Icons.favorite_outline),
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             hintText: "what are you grateful about?",
-                            counterText: "share your progess",
+                            counterText: "share your progress",
                           ),
                         ),
                       ),
                       Container(
-                        margin: EdgeInsets.only(top: 10),
-
+                        margin: const EdgeInsets.only(top: 10),
                         width: MediaQuery.of(context).size.width * 0.80,
                         child: TextField(
+                          controller: _improvementController,
                           autocorrect: true,
-
-                          enabled: true,
-
+                          maxLines: 3,
                           decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.alt_route_sharp),
+                            prefixIcon: const Icon(Icons.alt_route_sharp),
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            hintText: "what do you wish you did better? ",
+                            hintText: "what do you wish you did better?",
                             counterText: "share parts you wish to work on",
                           ),
                         ),
                       ),
                       Container(
-                        margin: EdgeInsets.only(top: 10),
-
+                        margin: const EdgeInsets.only(top: 10),
                         width: MediaQuery.of(context).size.width * 0.80,
                         child: TextField(
+                          controller: _goalsController,
                           autocorrect: true,
-
-                          enabled: true,
+                          maxLines: 3,
                           decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.check_box_outlined),
-
+                            prefixIcon: const Icon(Icons.check_box_outlined),
                             border: OutlineInputBorder(
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            hintText: "how will you achive you goals",
+                            hintText: "how will you achieve your goals",
                             counterText:
-                                "share your ideas on achiveing the goals",
+                                "share your ideas on achieving the goals",
                           ),
                         ),
                       ),
@@ -144,8 +197,9 @@ class _JournalState extends State<Journal> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 InkWell(
+                  onTap: _isSaving ? null : _saveEntry,
                   child: Container(
-                    padding: EdgeInsets.fromLTRB(25, 10, 25, 10),
+                    padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
@@ -157,11 +211,23 @@ class _JournalState extends State<Journal> {
 
                     child: Row(
                       children: [
-                        Icon(Icons.add, color: Colors.white60),
-
+                        if (_isSaving)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        else
+                          const Icon(Icons.add, color: Colors.white60),
+                        const SizedBox(width: 8),
                         Text(
-                          "new entry",
-                          style: TextStyle(
+                          _isSaving ? "saving..." : "new entry",
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),

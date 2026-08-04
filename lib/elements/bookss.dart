@@ -4,7 +4,8 @@ List booksCollected = [
     "summary": "spiritual journeys, self-discovery, following your dreams",
     "category": "philosophical fiction",
     "image": "https://i.ebayimg.com/images/g/ff0AAeSwZeRqENDD/s-l960.webp",
-    "link": "",
+    "link":
+        "https://icrrd.com/public/media/15-05-2021-084550The-Alchemist-Paulo-Coelho.pdf",
   },
   {
     "title": "How to Win Friends and Influence People by Dale Carnegie",
@@ -12,7 +13,8 @@ List booksCollected = [
         "Classic on interpersonal skills, communication, and building relationships.",
     "category": "Mindset & Wealth",
     "image": "https://i.ebayimg.com/images/g/XP0AAeSwULxpLbjS/s-l1600.webp",
-    "link": "",
+    "link":
+        "https://icrrd.com/public/media/31-10-2020-083612How%20to%20Win%20Friends%20and%20Influence%20People%20-%20Dale%20Carnegie.pdf",
   },
   {
     "title": "Rich Dad Poor Dad by Robert T. Kiyosaki",
@@ -20,14 +22,16 @@ List booksCollected = [
         "Financial literacy, assets vs. liabilities, and why the rich think differently about money.",
     "category": "Wealth building",
     "image": "https://i.ebayimg.com/images/g/wmUAAOSw6RdiIExm/s-l960.webp",
-    "link": "",
+    "link":
+        "https://sopheaksrey.wordpress.com/wp-content/uploads/2012/04/rich_dad_poor_dad_by_robert_t-_kiyosaki.pdf",
   },
   {
     "title": "Meditations by Marcus Aurelius",
     "summary": "Stoic wisdom on resilience, virtue, and handling adversity.",
     "category": "philosophical reflection",
     "image": "https://i.ebayimg.com/images/g/gaYAAeSwsGZprxkb/s-l1600.webp",
-    "link": "",
+    "link":
+        "https://www.maximusveritas.com/wp-content/uploads/2017/09/Marcus-Aurelius-Meditations.pdf",
   },
   {
     "title": "The Psychology of Money by Morgan Housel",
@@ -36,7 +40,8 @@ List booksCollected = [
     "category": "Mindset & Wealth",
     "image":
         "https://i.ebayimg.com/thumbs/images/g/D-oAAOSw~gRmlk7V/s-l500.jpg",
-    "link": "",
+    "link":
+        "https://tiue.uz/wp-content/uploads/2024/02/The-Psychology-of-Money-Morgan-Housel.pdf",
   },
   {
     "title": "The Four Agreements by Don Miguel Ruiz",
@@ -44,7 +49,8 @@ List booksCollected = [
     "category": "Spirituality & Personal Freedom", // added
     "image":
         "https://m.media-amazon.com/images/I/51FCRHwOkwL._SY445_SX342_FMwebp_.jpg",
-    "link": "",
+    "link":
+        "https://s3.amazonaws.com/kajabi-storefronts-production/sites/2147554771/themes/2150676493/downloads/B5RxqerUQHCWgCz9LQLF_The-four-agreements.pdf",
   },
   {
     "title": "The 48 Laws of Power by Robert Greene",
@@ -63,7 +69,8 @@ List booksCollected = [
         "Timeless principles for personal and professional effectiveness (be proactive, begin with the end in mind, etc.).",
     "category": "Personal Effectiveness & Leadership", // added
     "image": "https://m.media-amazon.com/images/I/810oMMWrltL._SY342_.jpg",
-    "link": "",
+    "link":
+        "https://icrrd.com/public/media/01-11-2020-212827The%207%20Habits%20of%20Highly%20Effective%20People.pdf",
   },
   {
     "title": "Man’s Search for Meaning by Viktor E. Frankl",
@@ -71,7 +78,8 @@ List booksCollected = [
         "A profound memoir and introduction to logotherapy. Frankl explores how finding meaning helps us endure suffering, based on his Holocaust experiences.",
     "category": "Psychology & Meaning", // added
     "image": "https://i.ebayimg.com/images/g/ZecAAeSwHflqWPpK/s-l960.webp",
-    "link": "",
+    "link":
+        "https://antilogicalism.com/wp-content/uploads/2017/07/mans-search-for-meaning.pdf",
   },
   {
     "title": "Thinking, Fast and Slow by Daniel Kahneman",
@@ -79,7 +87,8 @@ List booksCollected = [
         "Nobel Prize winner Kahneman explains System 1 (fast, intuitive) and System 2 (slow, deliberate) thinking, along with cognitive biases. Essential for understanding decision-making.",
     "category": "Psychology & Decision Making", // added
     "image": "https://i.ebayimg.com/images/g/Hh4AAOSwbPtkbUEU/s-l960.webp",
-    "link": "",
+    "link":
+        "https://dn790002.ca.archive.org/0/items/DanielKahnemanThinkingFastAndSlow/Daniel%20Kahneman-Thinking%2C%20Fast%20and%20Slow%20%20.pdf",
   },
   {
     "title": "Emotional Intelligence by Daniel Goleman",
@@ -87,7 +96,8 @@ List booksCollected = [
         "Argues that EQ (self-awareness, empathy, social skills) often matters more than IQ for success.",
     "category": "Psychology & Emotional Intelligence", // added
     "image": "https://i.ebayimg.com/images/g/PYgAAOSwq09itE6V/s-l960.webp",
-    "link": "",
+    "link":
+        "https://donainfo.wordpress.com/wp-content/uploads/2017/09/emotional-intelligence-daniel-goleman.pdf",
   },
   {
     "title": "The Power of Habit by Charles Duhigg",
@@ -95,7 +105,8 @@ List booksCollected = [
         "Explains the science of habit formation (cue-routine-reward loop) with real-world examples.",
     "category": "Habits & Behavior", // added
     "image": "https://i.ebayimg.com/images/g/KwMAAOSwhu1mu0Q0/s-l960.webp",
-    "link": "",
+    "link":
+        "https://charlesduhigg.com/wp-content/uploads/2025/01/Power-of-Habit-Chapter-One.pdf",
   },
   {
     "title":
@@ -112,7 +123,8 @@ List booksCollected = [
         "Warren Buffett’s favorite — value investing, margin of safety, and emotional discipline.",
     "category": "Investing & Personal Finance",
     "image": "https://i.ebayimg.com/images/g/n00AAOSwFdJZqfD5/s-l960.webp",
-    "link": "",
+    "link":
+        "https://irp-cdn.multiscreensite.com/cb9165b2/files/uploaded/The%20Intelligent%20Investor%20-%20BENJAMIN%20GRAHAM.pdf",
   },
   {
     "title": "The Body Keeps the Score by Bessel van der Kolk",
@@ -120,16 +132,8 @@ List booksCollected = [
         "Groundbreaking exploration of trauma, its effects on the brain and body, and innovative healing methods.",
     "category": "Trauma & Mental Health", // added
     "image": "https://i.ebayimg.com/images/g/0DgAAeSwFd1pklfp/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "Starting Strength by Mark Rippetoe",
-    "summary":
-        "The gold standard for beginners on barbell training (squats, deadlifts, bench press) with proper form and programming.",
-    "category": "Strength Training & Muscle Building",
-    "image":
-        "https://m.media-amazon.com/images/I/51qninUnshL._SY445_SX342_QL70_FMwebp_.jpg",
-    "link": "",
+    "link":
+        "https://traumaresearchfoundation.org/wp-content/uploads/2022/01/Book-Club-Study-Guide_compressed.pdf",
   },
   {
     "title": "Can’t Hurt Me by David Goggins",
@@ -145,7 +149,8 @@ List booksCollected = [
         "Bodyweight workouts you can do anywhere with minimal equipment.",
     "category": "Strength Training & Muscle Building",
     "image": "https://i.ebayimg.com/images/g/Va0AAOSwBlxZo9Tm/s-l960.webp",
-    "link": "",
+    "link":
+        "https://ayanetwork.com/aya/180/Home%20exercise%20YOU%20ARE%20YOUR%20OWN%20GYM-MANTESHWER.pdf",
   },
 
   {
@@ -155,7 +160,7 @@ List booksCollected = [
         "A powerful look at introversion, its strengths, and how society undervalues it.",
     "category": "Psychology & Personality", // added
     "image": "https://i.ebayimg.com/images/g/LsAAAeSwUu9qRYVY/s-l960.webp",
-    "link": "",
+    "link": "https://trans4mind.com/download-pdfs/Power%20of%20Introverts.pdf",
   },
   {
     "title": "A Random Walk Down Wall Street by Burton Malkiel",
@@ -163,7 +168,8 @@ List booksCollected = [
         "Classic on index funds, diversification, and why beating the market is hard.",
     "category": "Investing & Personal Finance",
     "image": "https://orders.bookazine.com/bvrtimg/coverLg/3/1324035439.jpg",
-    "link": "",
+    "link":
+        "https://yourknowledgedigest.wordpress.com/wp-content/uploads/2020/04/a-random-walk-down-wall-street.pdf",
   },
   {
     "title": "Mindset: The New Psychology of Success by Carol S. Dweck",
@@ -171,7 +177,8 @@ List booksCollected = [
         "Introduces growth vs. fixed mindsets and how they impact learning, relationships, and achievement.",
     "category": "Pyschology",
     "image": "https://i.ebayimg.com/images/g/iesAAOSwf61hE5eO/s-l1600.webp",
-    "link": "",
+    "link":
+        "https://togetherthevoice.org/wp-content/uploads/2024/06/Mindset_-The-New-Psychology-of-Success.pdf",
   },
   {
     "title": "Rich Dad’s Cashflow Quadrant by Robert Kiyosaki",
@@ -179,7 +186,7 @@ List booksCollected = [
         "Understanding employee, self-employed, business owner, and investor mindsets.",
     "category": "Investing & Personal Finance",
     "image": "https://i.ebayimg.com/images/g/kW4AAOSwN79mBdjG/s-l960.webp",
-    "link": "",
+    "link": "https://geocities.ws/mrteddy/cashflow.pdf",
   },
   {
     "title": "The Mountain Is You by Brianna Wiest",
@@ -187,7 +194,8 @@ List booksCollected = [
         "Explores the modern concept of self-sabotage and how to transform it into self-mastery by understanding why our minds resist change",
     "category": "Psychology, Mindset & Resilience",
     "image": "https://i.ebayimg.com/images/g/x7kAAeSw-ABqWhSb/s-l960.webp",
-    "link": "",
+    "link":
+        "https://img1.wsimg.com/blobby/go/7238259b-fd54-435d-a481-f1ac3932ba57/downloads/e70a92ef-51ed-4eb4-afd5-961e379914f8/_OceanofPDF.com_The_mountain_is_you_-_Brianna_.pdf?ver=1732473078043",
   },
   {
     "title": "The Let Them Theory by Mel Robbins",
@@ -198,50 +206,21 @@ List booksCollected = [
     "link": "",
   },
   {
-    "title": "The Subtle Art of Not Giving a F*ck by Mark Manson",
-    "summary":
-        "Counterintuitive advice on living a good life by focusing on what truly matters (and ignoring the rest).",
-    "category": "Habits, Discipline & Personal Mastery",
-    "image": "https://i.ebayimg.com/images/g/6qQAAOSwBgFdgjNe/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "Predictably Irrational by Dan Ariely",
-    "summary":
-        "Reveals how we make irrational decisions in predictable ways, from behavioral economics.",
-    "category": "Psychology",
-    "image": "https://i.ebayimg.com/images/g/Gx4AAeSwy7BqStPl/s-l960.webp",
-    "link": "",
-  },
-  {
     "title": "Deep Work by Cal Newport",
     "summary": "Master focused, high-value work in a distracted world.",
     "category": "Productivity & Time Management",
     "image": "https://i.ebayimg.com/images/g/M2EAAeSwIQVps~eM/s-l960.webp",
-    "link": "",
+    "link": "https://cpcglobal.org/publications/Deep%20Work.pdf",
   },
-  {
-    "title": "Attached by Amir Levine & Rachel Heller",
-    "summary": "Attachment styles in romantic relationships",
-    "category": "2. Relationships & Social Skills",
-    "image": "https://i.ebayimg.com/images/g/n3wAAeSw4VVqWhgd/s-l960.webp",
-    "link": "",
-  },
+
   {
     "title": "The Courage to Be Disliked by Ichiro Kishimi & Fumitake Koga",
     "summary":
         "Adlerian psychology on freedom, happiness, and living authentically (inspired by conversations with a philosopher).",
     "category": "Habits, Discipline & Personal Mastery",
     "image": "https://i.ebayimg.com/images/g/N-gAAeSwrDZpvWMJ/s-l1600.webp",
-    "link": "",
-  },
-  {
-    "title": "Forgiving What You Can't Forget by Lysa TerKeurst",
-    "summary":
-        "Practical help for healing from painful memories and moving forward.",
-    "category": "Emotional Regulation & Letting Go (Very Hot Right Now)",
-    "image": "https://i.ebayimg.com/images/g/sEMAAeSwPdBpM4KJ/s-l960.webp",
-    "link": "",
+    "link":
+        "https://www.thetbs.org/study-materials/wp-content/uploads/2023/03/The-Courage-to-be-Disliked-How-to-Change-Your-Life-and-Achieve-Real-Happiness-by-Ichiro-Kishimi-Fumitake-Koga-z-lib.org_.epub_.pdf",
   },
   {
     "title": "The Lean Startup by Eric Ries",
@@ -249,24 +228,8 @@ List booksCollected = [
         "Build, measure, learn — modern entrepreneurship and launching with minimal risk.",
     "category": "Entrepreneurship & Business Building",
     "image": "https://i.ebayimg.com/images/g/DAYAAeSwBEtqWgLH/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "Influence: The Psychology of Persuasion by Robert B. Cialdini",
-    "summary":
-        "The classic on the principles of persuasion (reciprocity, scarcity, authority, etc.). Updated editions include new insights.",
-    "category": "Psychology",
-    "image": "https://i.ebayimg.com/images/g/GssAAOSwiQ9ZWg3x/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "The Body Keeps the Score by Bessel van der Kolk",
-    "summary":
-        "Groundbreaking exploration of trauma, its effects on the brain and body, and innovative healing methods.",
-    "category": "Trauma & Mental Health", // added (duplicate entry)
-    "image":
-        "https://i.ebayimg.com/thumbs/images/g/NWUAAeSwuntpRA-E/s-l300.webp",
-    "link": "",
+    "link":
+        "https://albimarketing.com/docs/The%20Lean%20Startup%20How%20Today%E2%80%99s%20Entrepreneurs%20Use%20Continuous%20Innovation%20to%20Create%20Radically%20Successful%20Businesses.pdf",
   },
 
   {
@@ -275,16 +238,8 @@ List booksCollected = [
         "Practical guide to building good habits and breaking bad ones through small, compounding changes.",
     "category": "Habits",
     "image": "https://i.ebayimg.com/images/g/WAIAAOSwNjNki1ZX/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "The Comfort Crisis by Michael Easter",
-    "summary":
-        "A journalist leaves his comfortable life to live with an Arctic tribe and rediscovers the power of discomfort. It blends science, storytelling, and practical ideas on how embracing boredom, physical challenge, and nature can improve mental health, focus, and fulfillment in our overly comfortable modern world.",
-    "category": "Personal Growth / Adventure & Resilience",
-    "image":
-        "https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1601481119i/55120630.jpg",
-    "link": "",
+    "link":
+        "https://dn790007.ca.archive.org/0/items/atomic-habits-pdfdrive/Atomic%20habits%20%28%20PDFDrive%20%29.pdf",
   },
   {
     "title": "Ikigai by Héctor García and Francesc Miralles",
@@ -292,7 +247,8 @@ List booksCollected = [
         "Explores the Japanese concept of ikigai (reason for being) through the lives of the world’s longest-living people in Okinawa. Blends philosophy, practical advice on purpose, work, health, and community.",
     "category": "Purpose & Longevity",
     "image": "https://i.ebayimg.com/images/g/vwcAAOSw2dxjx~X7/s-l1600.webp",
-    "link": "",
+    "link":
+        "https://dn790007.ca.archive.org/0/items/ikigai-the-japanese-secret-to-a-long-and-happy-life-pdfdrive.com/Ikigai%20_%20the%20Japanese%20secret%20to%20a%20long%20and%20happy%20life%20%28%20PDFDrive.com%20%29.pdf",
   },
 
   {
@@ -300,36 +256,17 @@ List booksCollected = [
     "summary": "Innovation, monopolies, and creating breakthrough businesses.",
     "category": "Entrepreneurship & Business Building",
     "image": "https://i.ebayimg.com/images/g/L0AAAeSwVaNo3wZR/s-l960.webp",
-    "link": "",
+    "link":
+        "https://dspace.sxcjpr.edu.in/jspui/bitstream/123456789/1353/1/zero%20to%20one.pdf",
   },
-  {
-    "title": "Tiny Beautiful Things by Cheryl Strayed",
-    "summary":
-        "A collection of heartfelt, raw, and wise advice columns (from “Dear Sugar”). Covers heartbreak, love, loss, courage, and becoming who you want to be. Beautifully written and deeply human.",
-    "category": "Life Advice / Emotional Wisdom",
-    "image": "https://i.ebayimg.com/images/g/DmEAAeSwHkZqWRWx/s-l960.webp",
-    "link": "",
-  },
+
   {
     "title": "The Five Love Languages by Gary Chapman",
     "summary": "Improving love and connection",
     "category": "Relationships & Social Skills",
     "image": "https://i.ebayimg.com/images/g/Fq8AAOSw-29ZO8Th/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "Dare to Lead by Brené Brown",
-    "summary": "Modern leadership with courage and empathy",
-    "category": "Leadership & Influence",
-    "image": "https://i.ebayimg.com/images/g/M~sAAOSwhnZc5A1i/s-l960.webp",
-    "link": "",
-  },
-  {
-    "title": "Tiny Habits by BJ Fogg",
-    "summary": "Science of making changes stick easily",
-    "category": "Leadership & Influence",
-    "image": "https://i.ebayimg.com/images/g/gD8AAeSwdIJpxWO7/s-l1600.webp",
-    "link": "",
+    "link":
+        "https://ucuilorin.wordpress.com/wp-content/uploads/2018/03/the-5-love-languages-gary-chapman.pdf",
   },
   {
     "title": "The 4-Hour Workweek by Tim Ferriss",
@@ -337,14 +274,16 @@ List booksCollected = [
         "Lifestyle design, outsourcing, and escaping the 9-5 for more freedom and income.",
     "category": "Entrepreneurship & Business Building",
     "image": "https://i.ebayimg.com/images/g/YJcAAeSwRohpNZJe/s-l960.webp",
-    "link": "",
+    "link":
+        "https://sistem42.com/wp-content/uploads/2022/08/Timothy-Ferriss-The-4-Hour-Workweek-.pdf",
   },
   {
     "title": "Steal Like an Artist by Austin Kleon",
     "summary": "Creative inspiration and originality",
     "category": "Creativity & Personal Mastery",
     "image": "https://i.ebayimg.com/images/g/HFYAAeSwy6RoSDxk/s-l1600.webp",
-    "link": "",
+    "link":
+        "https://fallmuse02.hunter.cuny.edu/wp-content/uploads/2020/08/Steal_Like_an_Artist_10_Things_Nobody_To.pdf",
   },
   {
     "title": "Letters to a Young Poet by Rainer Maria Rilke",
@@ -353,7 +292,8 @@ List booksCollected = [
         "A slim, poetic collection of letters offering profound advice on writing, solitude, love, and living an authentic creative life. Timeless and deeply inspiring",
     "category": "Creativity / Life Wisdom",
     "image": "https://i.ebayimg.com/images/g/uq4AAeSwJM5qUXCa/s-l960.webp",
-    "link": "",
+    "link":
+        "https://www.alyve.org/english/docs/9.1/Rilke-Letters_to_a_Young_Poet.pdf",
   },
   {
     "title": "Bird by Bird by Anne Lamott",
@@ -369,7 +309,7 @@ List booksCollected = [
         "Guide to letting go of who you think you’re supposed to be and embracing who you are. Covers courage, compassion, and authenticity with research and personal stories",
     "category": "Self-Acceptance / Vulnerability",
     "image": "https://i.ebayimg.com/images/g/3rMAAeSwIQ9pqZ4w/s-l960.webp",
-    "link": "",
+    "link": "https://ati.dae.gov.in/ati12052021_4.pdf",
   },
   {
     "title": "The Creative Act by Rick Rubin",

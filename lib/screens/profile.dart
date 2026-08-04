@@ -28,10 +28,14 @@ class _ProfileState extends State<Profile> {
   }
 
   Future<void> _setupHive() async {
+    await Hive.initFlutter();
     _box = await Hive.openBox('profilepic');
-    setState(() {
-      _selectedImagePath = _box.get('profileImagePath');
-    });
+    final savedPath = _box.get('profileImagePath') as String?;
+    if (mounted) {
+      setState(() {
+        _selectedImagePath = savedPath;
+      });
+    }
   }
 
   Future<void> _pickProfileImage() async {
@@ -98,8 +102,13 @@ class _ProfileState extends State<Profile> {
                 width: 135,
                 child: InkWell(
                   onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+                        content: Text("message shared with the world !!!"),
+                      ),
+                    );
                     Navigator.pop(context);
-                    print("done");
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -194,18 +203,38 @@ class _ProfileState extends State<Profile> {
                   Positioned(
                     right: 16,
                     bottom: -30,
-                    child: ElevatedButton.icon(
-                      onPressed: _pickProfileImage,
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      onTap: _pickProfileImage,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
                         ),
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.edit, size: 18, color: Colors.black87),
+                            SizedBox(width: 6),
+                            Text(
+                              'Edit',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Edit'),
                     ),
                   ),
                   Positioned(
