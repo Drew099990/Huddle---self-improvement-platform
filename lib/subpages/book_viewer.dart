@@ -24,14 +24,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               style: TextStyle(color: Color.fromARGB(164, 230, 235, 240)),
             ),
             Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color.fromARGB(221, 158, 184, 199),
-                  width: 2,
-                ),
-              ),
               child: InkWell(
                 onTap: () => showDialog(
                   context: context,
@@ -102,9 +94,19 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                     ],
                   ),
                 ),
-                child: const Icon(
-                  Icons.note_add_outlined,
-                  color: Color.fromARGB(164, 230, 235, 240),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color.fromARGB(221, 158, 184, 199),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.note_add_outlined,
+                    color: Color.fromARGB(164, 230, 235, 240),
+                  ),
                 ),
               ),
             ),

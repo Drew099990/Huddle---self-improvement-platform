@@ -135,24 +135,48 @@ class _readentryState extends State<readentry> {
                               fontSize: 16,
                             ),
                           ),
+                          Divider(height: 10, color: Colors.black54),
                           const SizedBox(height: 8),
-                          Text("Gratitude and progression"),
+                          Text(
+                            "Gratitude and progression",
+                            style: TextStyle(
+                              color: const Color.fromARGB(255, 16, 60, 102),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
                           Text(
                             ': ${entry.gratitude}',
                             style: const TextStyle(fontStyle: FontStyle.italic),
                           ),
+                          Divider(height: 10, color: Colors.black12),
+
                           const SizedBox(height: 8),
-                          Text("Future room for improvement"),
+                          Text(
+                            "Future room for improvement",
+                            style: TextStyle(
+                              color: const Color.fromARGB(255, 27, 75, 114),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
 
                           Text(
                             'Improvement: ${entry.improvement}',
                             style: const TextStyle(fontStyle: FontStyle.italic),
                           ),
+                          Divider(height: 10, color: Colors.black12),
+
                           const SizedBox(height: 8),
-                          Text("Steps to take"),
+                          Text(
+                            "Steps to take",
+                            style: TextStyle(
+                              color: const Color.fromARGB(255, 27, 59, 114),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
 
                           Text(
-                            'Goals: ${entry.goals}',
+                            'Steps: ${entry.goals}',
                             style: const TextStyle(fontStyle: FontStyle.italic),
                           ),
                         ],

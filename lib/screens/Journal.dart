@@ -106,7 +106,6 @@ class _JournalState extends State<Journal> {
       body: SafeArea(
         child: ListView(
           children: [
-            SizedBox(height: 20),
             Column(
               children: [
                 Container(
@@ -145,7 +144,12 @@ class _JournalState extends State<Journal> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             hintText: "what are you grateful about?",
-                            counterText: "share your progress",
+                            counter: Text(
+                              "share your progress",
+                              style: TextStyle(
+                                color: const Color.fromARGB(255, 27, 59, 114),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -162,8 +166,13 @@ class _JournalState extends State<Journal> {
                               gapPadding: 10,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            hintText: "what do you wish you did better?",
-                            counterText: "share parts you wish to work on",
+                            hintText: "how do you wish to build up on this?",
+                            counter: Text(
+                              "share parts you wish to work on",
+                              style: TextStyle(
+                                color: const Color.fromARGB(255, 27, 59, 114),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -181,8 +190,12 @@ class _JournalState extends State<Journal> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             hintText: "how will you achieve your goals",
-                            counterText:
-                                "share your ideas on achieving the goals",
+                            counter: Text(
+                              "share your ideas on achieving the goals",
+                              style: TextStyle(
+                                color: const Color.fromARGB(255, 27, 59, 114),
+                              ),
+                            ),
                           ),
                         ),
                       ),

@@ -78,15 +78,6 @@ class HomeScreen extends StatelessWidget {
                   onTap: () => _startGame(context, GameMode.vsPlayer),
                 ),
                 const SizedBox(height: 20),
-
-                _ModeButton(
-                  icon: Icons.arrow_back_ios_new_outlined,
-                  label: 'Exit',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => MiniGames()),
-                  ),
-                ),
               ],
             ),
           ),

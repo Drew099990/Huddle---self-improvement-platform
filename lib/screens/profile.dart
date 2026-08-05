@@ -38,7 +38,11 @@ class _ProfileState extends State<Profile> {
     }
   }
 
+  bool picSelect = false;
+
   Future<void> _pickProfileImage() async {
+    setState(() {});
+    picSelect = true;
     final result = await FilePicker.pickFiles(
       type: FileType.image,
       allowMultiple: false,
@@ -51,6 +55,9 @@ class _ProfileState extends State<Profile> {
         _selectedImagePath = path;
       });
     }
+    setState(() {
+      picSelect = false;
+    });
   }
 
   void _toggleBroadcast() {
@@ -185,95 +192,47 @@ class _ProfileState extends State<Profile> {
                   ),
                   Positioned(
                     left: 20,
-                    bottom: -50,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 6),
-                      ),
-                      child: CircleAvatar(
-                        radius: 56,
-                        backgroundImage: _selectedImagePath != null
-                            ? FileImage(File(_selectedImagePath!))
-                            : const AssetImage("lib/assets/ab.jpg"),
-                        backgroundColor: Colors.grey[200],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 16,
-                    bottom: -30,
+                    bottom: -60,
                     child: InkWell(
                       onTap: _pickProfileImage,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          shape: BoxShape.circle,
+                          border: picSelect
+                              ? Border.all(
+                                  color: const Color.fromARGB(87, 40, 107, 184),
+                                  width: 6,
+                                )
+                              : Border.all(color: Colors.white, width: 6),
                         ),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.edit, size: 18, color: Colors.black87),
-                            SizedBox(width: 6),
-                            Text(
-                              'Edit',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundImage: _selectedImagePath != null
+                              ? FileImage(File(_selectedImagePath!))
+                              : const AssetImage("lib/assets/ab.jpg"),
+                          backgroundColor: Colors.grey[200],
                         ),
                       ),
                     ),
                   ),
                   Positioned(
-                    right: 30,
-                    bottom: -100,
+                    right: 210,
+                    bottom: 15,
                     child: InkWell(
-                      onTap: () {
-                        // TODO: Show subscription modal
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Upgrade feature coming soon"),
-                          ),
-                        );
-                      },
+                      onTap: _pickProfileImage,
+
                       child: Container(
-                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color.fromARGB(134, 165, 57, 14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color.fromARGB(
-                                255,
-                                37,
-                                78,
-                                69,
-                              ).withOpacity(0.4),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                          border: Border.all(width: 2, color: Colors.black54),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Text(
-                          "upgrade",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.amberAccent,
+                          border: Border.all(
+                            width: 2,
+                            color: const Color.fromARGB(111, 0, 85, 119),
                           ),
+                          color: const Color.fromARGB(255, 241, 243, 245),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.edit_outlined,
+                          color: const Color.fromARGB(146, 19, 87, 133),
                         ),
                       ),
                     ),
@@ -291,10 +250,10 @@ class _ProfileState extends State<Profile> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'William',
                               style: TextStyle(
                                 fontSize: 28,
@@ -302,12 +261,209 @@ class _ProfileState extends State<Profile> {
                                 color: Colors.black87,
                               ),
                             ),
-                            SizedBox(height: 4),
-                            Text(
+                            const SizedBox(height: 4),
+                            const Text(
                               '@william',
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
+                        ),
+                        InkWell(
+                          onTap: () {
+                            print("tapped");
+                            // TODO: Show subscription modal
+                            try {
+                              showBottomSheet(
+                                context: context,
+                                builder: (_) => Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                      131,
+                                      55,
+                                      92,
+                                      114,
+                                    ),
+                                  ),
+                                  height: 433,
+                                  width: MediaQuery.of(context).size.width * 1,
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.arrow_downward,
+                                        color: Colors.black38,
+                                      ),
+
+                                      Container(
+                                        width: MediaQuery.of(
+                                          context,
+                                        ).size.width,
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            151,
+                                            14,
+                                            71,
+                                            117,
+                                          ),
+                                        ),
+
+                                        child: Column(
+                                          children: [
+                                            Divider(height: 10, thickness: 5),
+
+                                            Text(
+                                              "hello there, Friend (❁´◡`❁) ",
+                                              style: TextStyle(
+                                                color: Colors.black45,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+
+                                            Text(
+                                              "Upgrade to premium",
+                                              style: TextStyle(
+                                                color: Color.fromARGB(
+                                                  210,
+                                                  248,
+                                                  234,
+                                                  209,
+                                                ),
+                                              ),
+                                            ),
+                                            Divider(height: 10),
+                                          ],
+                                        ),
+                                      ),
+
+                                      Container(
+                                        height: 300,
+                                        width: 600,
+                                        padding: EdgeInsets.all(15),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Perks("Remove all Ads"),
+                                            Perks("Unlimited Favorites"),
+                                            Perks("Access to All Games"),
+                                            Perks("Become a Beta Tester"),
+                                            Perks("Peace and Joy ^_^"),
+                                            SizedBox(height: 15),
+
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.all(10),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          15,
+                                                        ),
+                                                    border: Border.all(
+                                                      width: 4,
+                                                      color:
+                                                          const Color.fromARGB(
+                                                            210,
+                                                            86,
+                                                            101,
+                                                            143,
+                                                          ),
+                                                    ),
+                                                    color: const Color.fromARGB(
+                                                      210,
+                                                      91,
+                                                      125,
+                                                      170,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    "Upgrade",
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          const Color.fromARGB(
+                                                            255,
+                                                            235,
+                                                            231,
+                                                            183,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        width: MediaQuery.of(
+                                          context,
+                                        ).size.width,
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            151,
+                                            14,
+                                            71,
+                                            117,
+                                          ),
+                                        ),
+                                        padding: EdgeInsets.only(
+                                          top: 5,
+                                          bottom: 5,
+                                        ),
+                                        child: Text(
+                                          "Thanks for the support, appreciate the help !!!",
+                                          style: TextStyle(
+                                            color: const Color.fromARGB(
+                                              255,
+                                              185,
+                                              179,
+                                              161,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              print(e);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(134, 165, 57, 14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    37,
+                                    78,
+                                    69,
+                                  ).withOpacity(0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                              border: Border.all(
+                                width: 2,
+                                color: Colors.black54,
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: const Text(
+                              "upgrade",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.amberAccent,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -457,6 +613,28 @@ class _ProfileState extends State<Profile> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget Perks(String perk) {
+    return Row(
+      children: [
+        Icon(
+          Icons.star_border_outlined,
+          size: 40,
+          color: const Color.fromARGB(242, 197, 204, 218),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            perk,
+            style: TextStyle(
+              fontSize: 15,
+              color: const Color.fromARGB(255, 246, 246, 248),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
