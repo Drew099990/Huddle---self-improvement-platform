@@ -128,14 +128,203 @@ class _readentryState extends State<readentry> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Entry #${entry.id}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Entry #${entry.id}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () => showDialog(
+                                      context: context,
+                                      builder: (_) => Container(
+                                        child: AlertDialog(
+                                          title: Text(
+                                            "Edit: Entry #${entry.id}",
+                                          ),
+                                          content: Container(
+                                            padding: EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              border: Border.all(
+                                                width: 2,
+                                                color: const Color.fromARGB(
+                                                  185,
+                                                  17,
+                                                  65,
+                                                  80,
+                                                ),
+                                              ),
+                                            ),
+                                            height: 300,
+                                            child: Column(
+                                              children: [
+                                                Divider(height: 2),
+                                                SizedBox(height: 10),
+                                                TextField(
+                                                  enabled: true,
+                                                  decoration: InputDecoration(
+                                                    fillColor:
+                                                        const Color.fromARGB(
+                                                          255,
+                                                          201,
+                                                          203,
+                                                          204,
+                                                        ),
+
+                                                    hintText: "Progress made",
+                                                    counterText: "Progress",
+                                                  ),
+                                                ),
+                                                TextField(
+                                                  enabled: true,
+                                                  decoration: InputDecoration(
+                                                    fillColor:
+                                                        const Color.fromARGB(
+                                                          255,
+                                                          201,
+                                                          203,
+                                                          204,
+                                                        ),
+
+                                                    hintText: "Room for growth",
+                                                    counterText: "Improvements",
+                                                  ),
+                                                ),
+                                                TextField(
+                                                  enabled: true,
+                                                  decoration: InputDecoration(
+                                                    fillColor:
+                                                        const Color.fromARGB(
+                                                          255,
+                                                          201,
+                                                          203,
+                                                          204,
+                                                        ),
+
+                                                    hintText: "Step to take",
+                                                    counterText: "Steps",
+                                                  ),
+                                                ),
+                                                InkWell(
+                                                  onTap: () => {
+                                                    Navigator.pop(context),
+                                                  },
+                                                  child: Container(
+                                                    padding: EdgeInsets.all(10),
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                        width: 2,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            15,
+                                                          ),
+                                                      color:
+                                                          const Color.fromARGB(
+                                                            96,
+                                                            22,
+                                                            69,
+                                                            107,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      "Update",
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        padding: EdgeInsets.all(5),
+
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            129,
+                                            51,
+                                            102,
+                                            94,
+                                          ),
+                                          border: Border.all(
+                                            width: 4,
+                                            color: const Color.fromARGB(
+                                              96,
+                                              20,
+                                              52,
+                                              71,
+                                            ),
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            15,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          color: Color.fromARGB(
+                                            255,
+                                            186,
+                                            211,
+                                            193,
+                                          ),
+                                          Icons.edit_outlined,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(
+                                          164,
+                                          121,
+                                          47,
+                                          36,
+                                        ),
+                                        border: Border.all(
+                                          width: 4,
+                                          color: const Color.fromARGB(
+                                            96,
+                                            20,
+                                            52,
+                                            71,
+                                          ),
+                                        ),
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      child: Icon(
+                                        color: Color.fromARGB(
+                                          255,
+                                          211,
+                                          188,
+                                          186,
+                                        ),
+                                        Icons.delete_forever_outlined,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          Divider(height: 10, color: Colors.black54),
+                          Divider(height: 30, color: Colors.black54),
                           const SizedBox(height: 8),
                           Text(
                             "Gratitude and progression",

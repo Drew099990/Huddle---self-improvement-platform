@@ -284,7 +284,7 @@ class _ProfileState extends State<Profile> {
                                       114,
                                     ),
                                   ),
-                                  height: 433,
+                                  height: 431,
                                   width: MediaQuery.of(context).size.width * 1,
                                   child: Column(
                                     children: [
