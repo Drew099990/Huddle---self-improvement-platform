@@ -26,6 +26,7 @@ class _ProfileState extends State<Profile> {
   bool _activityReady = false;
   int _journalCount = 0;
   String _installedDaysText = '0 days';
+  bool _upgradeMenu = false;
 
   @override
   void initState() {
@@ -196,17 +197,18 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color.fromARGB(147, 191, 203, 219),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Personal view',
           style: TextStyle(
-            color: Color.fromARGB(69, 25, 70, 155),
+            color: _upgradeMenu
+                ? const Color.fromARGB(139, 25, 70, 155)
+                : const Color.fromARGB(29, 25, 70, 155),
             letterSpacing: 3,
             fontWeight: FontWeight.w600,
           ),
@@ -312,9 +314,14 @@ class _ProfileState extends State<Profile> {
                         InkWell(
                           onTap: () {
                             print("tapped");
+                            if (mounted) {
+                              setState(() {
+                                _upgradeMenu = true;
+                              });
+                            }
                             // TODO: Show subscription modal
                             try {
-                              showBottomSheet(
+                              final controller = showBottomSheet(
                                 context: context,
                                 builder: (_) => Container(
                                   decoration: BoxDecoration(
@@ -388,7 +395,7 @@ class _ProfileState extends State<Profile> {
                                             Perks("Unlimited Favorites"),
                                             Perks("Access to All Games"),
                                             Perks("Become a Beta Tester"),
-                                            Perks("Peace and Joy ^_^"),
+                                            Perks("Supports me ^_^"),
                                             SizedBox(height: 15),
 
                                             Row(
@@ -396,7 +403,10 @@ class _ProfileState extends State<Profile> {
                                                   MainAxisAlignment.center,
                                               children: [
                                                 Container(
-                                                  padding: EdgeInsets.all(10),
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 10,
+                                                    horizontal: 15,
+                                                  ),
                                                   decoration: BoxDecoration(
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -420,7 +430,7 @@ class _ProfileState extends State<Profile> {
                                                     ),
                                                   ),
                                                   child: Text(
-                                                    "Upgrade",
+                                                    "\$9.99",
                                                     style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.bold,
@@ -471,6 +481,13 @@ class _ProfileState extends State<Profile> {
                                   ),
                                 ),
                               );
+                              controller.closed.then((_) {
+                                if (mounted) {
+                                  setState(() {
+                                    _upgradeMenu = false;
+                                  });
+                                }
+                              });
                             } catch (e) {
                               print(e);
                             }
@@ -583,53 +600,61 @@ class _ProfileState extends State<Profile> {
                       const Center(child: CircularProgressIndicator()),
                     ] else
                       ValueListenableBuilder<Box>(
-                        valueListenable: _activityBox.listenable(keys: ['activities']),
+                        valueListenable: _activityBox.listenable(
+                          keys: ['activities'],
+                        ),
                         builder: (context, box, _) {
-                        final raw = box.get('activities', defaultValue: <dynamic>[]);
-                        final activities = <Map<String, String>>[];
-
-                        if (raw is List) {
-                          activities.addAll(
-                            raw.whereType<Map>().map((map) => map.cast<String, String>()),
+                          final raw = box.get(
+                            'activities',
+                            defaultValue: <dynamic>[],
                           );
-                        }
+                          final activities = <Map<String, String>>[];
 
-                        if (activities.isEmpty) {
-                          return const Text(
-                            'No recent activity yet. Actions like saving or favoriting books will appear here.',
-                            style: TextStyle(color: Colors.grey),
-                          );
-                        }
-
-                        return ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: activities.length,
-                          separatorBuilder: (_, __) => const Divider(height: 16),
-                          itemBuilder: (context, index) {
-                            final activity = activities[index];
-                            final message = activity['message'] ?? '';
-                            final timestamp = activity['timestamp'] ?? '';
-
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.history,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              title: Text(message),
-                              subtitle: Text(
-                                ActivityLog.formatAge(timestamp),
-                                style: const TextStyle(color: Colors.grey),
+                          if (raw is List) {
+                            activities.addAll(
+                              raw.whereType<Map>().map(
+                                (map) => map.cast<String, String>(),
                               ),
                             );
-                          },
-                        );
-                      },
-                    ),
+                          }
+
+                          if (activities.isEmpty) {
+                            return const Text(
+                              'No recent activity yet. Actions like saving or favoriting books will appear here.',
+                              style: TextStyle(color: Colors.grey),
+                            );
+                          }
+
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: activities.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 16),
+                            itemBuilder: (context, index) {
+                              final activity = activities[index];
+                              final message = activity['message'] ?? '';
+                              final timestamp = activity['timestamp'] ?? '';
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.history,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                title: Text(message),
+                                subtitle: Text(
+                                  ActivityLog.formatAge(timestamp),
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
 
                     const Divider(height: 16),
                     const SizedBox(height: 24),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewerPage extends StatefulWidget {
@@ -10,7 +11,38 @@ class PdfViewerPage extends StatefulWidget {
 }
 
 class _PdfViewerPageState extends State<PdfViewerPage> {
-  String note = " ";
+  String note = '';
+  late Box _notesBox;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedNote();
+  }
+
+  Future<void> _loadSavedNote() async {
+    await Hive.initFlutter();
+    _notesBox = Hive.isBoxOpen('bookNotes')
+        ? Hive.box('bookNotes')
+        : await Hive.openBox('bookNotes');
+
+    final savedNote = _notesBox.get(_noteKey()) ?? '';
+    if (mounted) {
+      setState(() {
+        note = savedNote;
+      });
+    }
+  }
+
+  String _noteKey() => 'note_${widget.url}';
+
+  Future<void> _saveNote() async {
+    if (!Hive.isBoxOpen('bookNotes')) {
+      await Hive.initFlutter();
+      _notesBox = await Hive.openBox('bookNotes');
+    }
+    await _notesBox.put(_noteKey(), note);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +60,14 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 onTap: () => showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
+                    backgroundColor: const Color.fromARGB(255, 222, 228, 230),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                     title: Text(
                       "Make a short note",
                       style: TextStyle(
-                        color: const Color.fromARGB(255, 22, 40, 97),
+                        color: const Color.fromARGB(144, 22, 39, 97),
                       ),
                     ),
                     content: Container(
@@ -45,15 +78,19 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                             padding: EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: const Color.fromARGB(118, 16, 42, 80),
+                                color: const Color.fromARGB(68, 16, 42, 80),
                                 width: 2,
                               ),
                               color: const Color.fromARGB(255, 201, 203, 204),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             height: 130,
-                            child: Text("$note "),
+                            child: Text(
+                              "$note ",
+                              style: TextStyle(color: Colors.black45),
+                            ),
                           ),
+                          SizedBox(height: 5),
                           TextField(
                             onChanged: (value) {
                               setState(() {
@@ -69,25 +106,40 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       ),
                     ),
                     actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
+                      InkWell(
+                        onTap: () async {
+                          await _saveNote();
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                          }
                         },
-                        child: Text(
-                          "Save Note",
-                          style: TextStyle(
-                            color: const Color.fromARGB(255, 22, 40, 97),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              width: 2,
+                              color: Color.fromARGB(132, 37, 69, 109),
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                            color: Color.fromARGB(136, 5, 48, 77),
+                          ),
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            "Save Note",
+                            style: TextStyle(color: Colors.white70),
                           ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
+                      InkWell(
+                        onTap: () {
                           Navigator.of(context).pop();
                         },
-                        child: Text(
-                          "Close",
-                          style: TextStyle(
-                            color: const Color.fromARGB(255, 22, 40, 97),
+                        child: Container(
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "Close",
+                            style: TextStyle(
+                              color: const Color.fromARGB(193, 22, 39, 97),
+                            ),
                           ),
                         ),
                       ),

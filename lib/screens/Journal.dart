@@ -111,6 +111,7 @@ class _JournalState extends State<Journal> {
           children: [
             Column(
               children: [
+                SizedBox(height: 4),
                 Container(
                   padding: EdgeInsets.all(
                     MediaQuery.of(context).size.width * 0.05,
@@ -118,18 +119,22 @@ class _JournalState extends State<Journal> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color.fromARGB(160, 15, 43, 80),
+                      color: const Color.fromARGB(159, 143, 158, 177),
                       width: 4,
                     ),
                   ),
                   child: Column(
                     children: [
+                      Icon(
+                        Icons.menu_book_outlined,
+                        color: Color.fromARGB(190, 6, 22, 37),
+                      ),
                       Text(
                         "Daily entry",
                         style: TextStyle(
                           letterSpacing: 3,
                           color: const Color.fromARGB(221, 11, 49, 99),
-                          fontSize: 25,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -208,21 +213,21 @@ class _JournalState extends State<Journal> {
               ],
             ),
 
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 InkWell(
                   onTap: _isSaving ? null : _saveEntry,
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         width: 3,
                         color: const Color.fromARGB(157, 2, 54, 66),
                       ),
-                      color: const Color.fromARGB(255, 15, 75, 105),
+                      color: const Color.fromARGB(255, 69, 107, 126),
                     ),
 
                     child: Row(
@@ -255,14 +260,14 @@ class _JournalState extends State<Journal> {
 
                 InkWell(
                   child: Container(
-                    padding: EdgeInsets.fromLTRB(25, 10, 25, 10),
+                    padding: EdgeInsets.fromLTRB(25, 8, 25, 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         width: 3,
                         color: const Color.fromARGB(157, 2, 54, 66),
                       ),
-                      color: const Color.fromARGB(255, 15, 75, 105),
+                      color: const Color.fromARGB(255, 69, 107, 126),
                     ),
 
                     child: InkWell(

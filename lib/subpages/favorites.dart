@@ -162,10 +162,102 @@ class _FavoritesState extends State<Favorites> {
                             ),
                             ElevatedButton(
                               onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const Home(),
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    backgroundColor: const Color.fromARGB(
+                                      255,
+                                      223,
+                                      228,
+                                      233,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    titlePadding: const EdgeInsets.fromLTRB(
+                                      24,
+                                      20,
+                                      24,
+                                      8,
+                                    ),
+                                    contentPadding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      8,
+                                      16,
+                                      16,
+                                    ),
+                                    title: const Text(
+                                      'Upgrade to Premium',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color.fromARGB(200, 27, 52, 77),
+                                      ),
+                                    ),
+
+                                    content: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: 420,
+                                        maxHeight:
+                                            MediaQuery.of(context).size.height *
+                                            0.75,
+                                      ),
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: double.infinity,
+                                              padding: const EdgeInsets.all(16),
+                                              decoration: BoxDecoration(
+                                                color: const Color.fromARGB(
+                                                  131,
+                                                  55,
+                                                  92,
+                                                  114,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Perks("Remove all Ads"),
+                                                  Perks("Unlimited Favorites"),
+                                                  Perks("Access to All Games"),
+                                                  Perks("Become a Beta Tester"),
+                                                  Perks("Supports me ^_^"),
+                                                  const SizedBox(height: 12),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    actions: [
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                          // Navigate to the upgrade page or perform upgrade action
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromARGB(
+                                            255,
+                                            50,
+                                            94,
+                                            129,
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          '\$9.99',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
@@ -215,7 +307,7 @@ class _FavoritesState extends State<Favorites> {
 
                             child: Container(
                               decoration: BoxDecoration(
-                                color: const Color.fromARGB(195, 50, 89, 100),
+                                color: const Color.fromARGB(195, 49, 79, 88),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: const Color.fromARGB(255, 75, 90, 102),
@@ -252,6 +344,7 @@ class _FavoritesState extends State<Favorites> {
                                       textAlign: TextAlign.center,
 
                                       style: TextStyle(
+                                        decoration: TextDecoration.underline,
                                         color: Colors.white70,
                                         fontWeight: FontWeight.bold,
                                       ),

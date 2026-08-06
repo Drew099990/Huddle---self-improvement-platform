@@ -38,6 +38,7 @@ class _PostCard {
 
 class _JournalState extends State<Community> {
   late Box _box;
+  bool normal_Routine = true;
   final TextEditingController _posttitle = TextEditingController();
   final TextEditingController _post = TextEditingController();
   String post = '';
@@ -239,91 +240,104 @@ class _JournalState extends State<Community> {
       body: SafeArea(
         child: ListView(
           children: [
-            const SizedBox(height: 10),
-            Column(
-              children: [
-                const Text(
-                  'Daily Reset',
-                  style: TextStyle(
-                    letterSpacing: 3,
-                    color: Color.fromARGB(221, 11, 49, 99),
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black12, width: 3),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(height: 20),
+                  const Text(
+                    'Daily Reset',
+                    style: TextStyle(
+                      letterSpacing: 3,
+                      color: Color.fromARGB(97, 11, 49, 99),
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  width: MediaQuery.of(context).size.width * 0.80,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 56,
-                        child: TextField(
-                          maxLines: 1,
-                          autocorrect: true,
-                          controller: _posttitle,
-                          enabled: true,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
+                  Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    width: MediaQuery.of(context).size.width * 0.80,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 56,
+                          child: TextField(
+                            maxLines: 1,
+                            autocorrect: true,
+                            controller: _posttitle,
+                            enabled: true,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              suffixIcon: const Icon(Icons.title_outlined),
+                              border: OutlineInputBorder(
+                                gapPadding: 10,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              hintText: 'title',
+                              counterText: 'title',
                             ),
-                            suffixIcon: const Icon(Icons.language_outlined),
-                            border: OutlineInputBorder(
-                              gapPadding: 10,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            hintText: 'title',
-                            counterText: 'title',
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 56,
-                        child: TextField(
-                          autocorrect: true,
-                          controller: _post,
-                          enabled: true,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          child: TextField(
+                            autocorrect: true,
+                            controller: _post,
+                            enabled: true,
+                            maxLines: 5,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
+                              suffixIcon: const Icon(Icons.note_alt_outlined),
+                              border: OutlineInputBorder(
+                                gapPadding: 10,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              hintText: 'daily goals for the day?',
+                              counterText:
+                                  '24 hours goals set ($count /${_allowOverLimit ? '5+' : '5'})',
                             ),
-                            suffixIcon: const Icon(Icons.language_outlined),
-                            border: OutlineInputBorder(
-                              gapPadding: 10,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            hintText: 'daily goals for the day?',
-                            counterText:
-                                '24 hours goals set ($count /${_allowOverLimit ? '5+' : '5'})',
                           ),
                         ),
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        activeColor: const Color.fromARGB(255, 15, 58, 99),
-                        title: const Text(
-                          'Bypass the 5-card daily limit',
-                          style: TextStyle(fontSize: 12),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: const Color.fromARGB(255, 15, 58, 99),
+                          title: normal_Routine
+                              ? const Text(
+                                  'Bypass the 5-card daily limit',
+                                  style: TextStyle(fontSize: 12),
+                                )
+                              : null,
+                          subtitle: normal_Routine
+                              ? const Text(
+                                  'Enable this to add more than 5 cards today.',
+                                )
+                              : Text(
+                                  '"Your mind often quits a thousand times before your body does" ',
+                                ),
+                          value: _allowOverLimit,
+                          onChanged: (value) {
+                            setState(() {
+                              normal_Routine = !normal_Routine;
+                              _allowOverLimit = value;
+                            });
+                          },
                         ),
-                        subtitle: const Text(
-                          'Enable this to add more than 5 cards today.',
-                        ),
-                        value: _allowOverLimit,
-                        onChanged: (value) {
-                          setState(() {
-                            _allowOverLimit = value;
-                          });
-                        },
-                      ),
-                    ],
+                        SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             Row(
@@ -335,8 +349,11 @@ class _JournalState extends State<Community> {
                     padding: const EdgeInsets.fromLTRB(25, 10, 25, 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(width: 3),
-                      color: const Color.fromARGB(255, 15, 75, 105),
+                      border: Border.all(
+                        width: 3,
+                        color: Color.fromARGB(255, 41, 66, 104),
+                      ),
+                      color: const Color.fromARGB(255, 69, 107, 126),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -356,9 +373,13 @@ class _JournalState extends State<Community> {
                 ),
               ],
             ),
+            SizedBox(height: 15),
+            Divider(height: 4, thickness: 3, color: Colors.black12),
+
             Padding(
               padding: EdgeInsets.all(10),
-              child: _generatedCards.isEmpty
+
+              child: !_generatedCards.isEmpty
                   ? Text(
                       MessageShow,
                       textAlign: TextAlign.center,
@@ -434,7 +455,7 @@ class _JournalState extends State<Community> {
                           ClipRRect(
                             borderRadius: BorderRadiusGeometry.circular(10),
                             child: Text(
-                              " <${card.title}> ",
+                              " <${card.title}/> ",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 letterSpacing: 1.5,

@@ -312,14 +312,13 @@ class _readentryState extends State<readentry> {
                   margin: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: const Color.fromARGB(157, 15, 58, 78),
+                      color: const Color.fromARGB(55, 15, 58, 78),
                       width: 3,
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
 
-                  child: Card(
-                    elevation: 4,
+                  child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -330,10 +329,11 @@ class _readentryState extends State<readentry> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Entry #${entry.id}',
+                                'Daily Entry #${entry.id}',
                                 style: const TextStyle(
+                                  color: Colors.black45,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  fontSize: 20,
                                 ),
                               ),
                               Row(
@@ -343,7 +343,7 @@ class _readentryState extends State<readentry> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Container(
-                                        padding: EdgeInsets.all(5),
+                                        padding: EdgeInsets.all(3),
 
                                         decoration: BoxDecoration(
                                           color: const Color.fromARGB(
@@ -353,7 +353,7 @@ class _readentryState extends State<readentry> {
                                             94,
                                           ),
                                           border: Border.all(
-                                            width: 4,
+                                            width: 3,
                                             color: const Color.fromARGB(
                                               96,
                                               20,
@@ -382,7 +382,7 @@ class _readentryState extends State<readentry> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Container(
-                                        padding: EdgeInsets.all(5),
+                                        padding: EdgeInsets.all(3),
                                         decoration: BoxDecoration(
                                           color: const Color.fromARGB(
                                             164,
@@ -391,7 +391,7 @@ class _readentryState extends State<readentry> {
                                             36,
                                           ),
                                           border: Border.all(
-                                            width: 4,
+                                            width: 3,
                                             color: const Color.fromARGB(
                                               96,
                                               20,

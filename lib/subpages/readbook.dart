@@ -6,6 +6,17 @@ import '../helpers/activity_log.dart';
 import '../screens/home.dart';
 import 'book_viewer.dart';
 
+bool canToggleFavorite({
+  required bool isAlreadyFavorite,
+  required int favoritesCount,
+  required int limit,
+}) {
+  if (isAlreadyFavorite) {
+    return favoritesCount >= limit;
+  }
+  return favoritesCount < limit;
+}
+
 class Rbooks extends StatefulWidget {
   const Rbooks({super.key, required this.book});
 
@@ -17,6 +28,7 @@ class Rbooks extends StatefulWidget {
 
 class _RbooksState extends State<Rbooks> {
   bool favorite = false;
+  int limit = 5;
   late Box _favoriteBox;
 
   Future<Box> _openFavoritesBox() async {
@@ -59,28 +71,112 @@ class _RbooksState extends State<Rbooks> {
     final title = widget.book['title'];
     final isAlreadyFavorite = favorites.any((item) => item['title'] == title);
 
-    if (!isAlreadyFavorite && favorites.length >= 5) {
+    final canToggle = canToggleFavorite(
+      isAlreadyFavorite: isAlreadyFavorite,
+      favoritesCount: favorites.length,
+      limit: limit,
+    );
+
+    if (!canToggle) {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: const Color.fromARGB(253, 221, 228, 233),
           title: const Text('Favorite limit reached'),
           content: const Text(
-            'You can only save up to 5 favorite books. Remove one from favorites first, or use Add more to browse the library.',
+            'You can only save up to 5 favorite books. Upgrade to add more.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color.fromARGB(108, 32, 66, 117)),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => Home()),
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    backgroundColor: const Color.fromARGB(255, 223, 228, 233),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                    contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    title: const Text(
+                      'Upgrade to Premium',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(200, 27, 52, 77),
+                      ),
+                    ),
+
+                    content: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 420,
+                        maxHeight: MediaQuery.of(context).size.height * 0.75,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color.fromARGB(131, 55, 92, 114),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Perks("Remove all Ads"),
+                                  Perks("Unlimited Favorites"),
+                                  Perks("Access to All Games"),
+                                  Perks("Become a Beta Tester"),
+                                  Perks("Supports me ^_^"),
+                                  const SizedBox(height: 12),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          // Navigate to the upgrade page or perform upgrade action
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            28,
+                            76,
+                            116,
+                          ),
+                        ),
+                        child: const Text(
+                          '\$9.99',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
-              child: const Text('Add more'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 28, 76, 116),
+              ),
+              child: const Text(
+                'Upgrade',
+                style: TextStyle(color: Colors.white70),
+              ),
             ),
           ],
         ),
@@ -88,7 +184,7 @@ class _RbooksState extends State<Rbooks> {
       return;
     }
 
-    if (isAlreadyFavorite) {
+    if (isAlreadyFavorite && favorites.length >= limit) {
       favorites.removeWhere((item) => item['title'] == title);
       await ActivityLog.add('Removed favorite book: ${widget.book['title']}');
     } else {
@@ -324,8 +420,8 @@ class _RbooksState extends State<Rbooks> {
                       onTap: () => _openLink(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 24,
+                          vertical: 10,
+                          horizontal: 25,
                         ),
                         decoration: BoxDecoration(
                           color: const Color.fromARGB(255, 27, 89, 117),
@@ -340,7 +436,7 @@ class _RbooksState extends State<Rbooks> {
                             const Icon(Icons.menu_book, color: Colors.white),
                             const SizedBox(width: 8),
                             const Text(
-                              'Read (in-app)',
+                              'Read',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -367,7 +463,7 @@ class _RbooksState extends State<Rbooks> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 5,
+                          vertical: 7,
                           horizontal: 15,
                         ),
                         decoration: BoxDecoration(
@@ -379,7 +475,7 @@ class _RbooksState extends State<Rbooks> {
                           ),
                         ),
                         child: const Text(
-                          'Leave Comment',
+                          'Leave a Comment',
                           style: TextStyle(color: Color.fromARGB(117, 0, 0, 0)),
                         ),
                       ),
@@ -399,4 +495,31 @@ class _RbooksState extends State<Rbooks> {
       ),
     );
   }
+}
+
+Widget Perks(String perk) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.star_border_outlined,
+          size: 34,
+          color: const Color.fromARGB(242, 197, 204, 218),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            perk,
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color.fromARGB(255, 246, 246, 248),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
