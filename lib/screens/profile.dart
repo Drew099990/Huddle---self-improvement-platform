@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../helpers/activity_log.dart';
+import '../helpers/journal_database.dart';
 import "../subpages/minigame.dart";
 import "../subpages/favorites.dart";
 
@@ -20,22 +22,15 @@ class _ProfileState extends State<Profile> {
   bool _showBroadcast = false;
   String? _selectedImagePath;
   late Box _box;
+  late Box _activityBox;
+  bool _activityReady = false;
+  int _journalCount = 0;
+  String _installedDaysText = '0 days';
 
   @override
   void initState() {
     super.initState();
     _setupHive();
-  }
-
-  Future<void> _setupHive() async {
-    await Hive.initFlutter();
-    _box = await Hive.openBox('profilepic');
-    final savedPath = _box.get('profileImagePath') as String?;
-    if (mounted) {
-      setState(() {
-        _selectedImagePath = savedPath;
-      });
-    }
   }
 
   bool picSelect = false;
@@ -58,6 +53,52 @@ class _ProfileState extends State<Profile> {
     setState(() {
       picSelect = false;
     });
+  }
+
+  Future<void> _loadProfileStats() async {
+    final journalCount = await JournalDatabase.instance.countEntries();
+    final savedDate = _box.get('installDate') as String?;
+    DateTime installDate = DateTime.now();
+
+    if (savedDate != null) {
+      final parsedDate = DateTime.tryParse(savedDate);
+      if (parsedDate != null) {
+        installDate = parsedDate;
+      }
+    }
+
+    final daysInstalled = DateTime.now().difference(installDate).inDays + 1;
+    final installedDaysText = daysInstalled == 1
+        ? '1 day'
+        : '$daysInstalled days';
+
+    if (!mounted) return;
+    setState(() {
+      _journalCount = journalCount;
+      _installedDaysText = installedDaysText;
+    });
+  }
+
+  Future<void> _setupHive() async {
+    await Hive.initFlutter();
+    _box = await Hive.openBox('profilepic');
+    _activityBox = await Hive.openBox('activityLog');
+
+    final savedPath = _box.get('profileImagePath') as String?;
+    final savedInstallDate = _box.get('installDate') as String?;
+
+    if (savedInstallDate == null) {
+      await _box.put('installDate', DateTime.now().toIso8601String());
+    }
+
+    if (mounted) {
+      setState(() {
+        _selectedImagePath = savedPath;
+        _activityReady = true;
+      });
+    }
+
+    await _loadProfileStats();
   }
 
   void _toggleBroadcast() {
@@ -475,12 +516,17 @@ class _ProfileState extends State<Profile> {
                       children: [
                         _buildStatCard(
                           'day installed',
-                          '8 days ago',
+                          _installedDaysText,
                           Icons.calendar_today,
                           size.width,
                         ),
                         const SizedBox(width: 8),
-                        _buildStatCard('Journal', '5 ', Icons.book, size.width),
+                        _buildStatCard(
+                          'Journal',
+                          '$_journalCount',
+                          Icons.book,
+                          size.width,
+                        ),
                         const SizedBox(width: 8),
                         _buildStatCard('Posts', '4 ', Icons.forum, size.width),
                       ],
@@ -533,26 +579,54 @@ class _ProfileState extends State<Profile> {
                     ),
                     const SizedBox(height: 8),
 
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 3,
-                      separatorBuilder: (_, __) => const Divider(height: 16),
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.grey[200],
-                            child: const Icon(Icons.note, color: Colors.grey),
-                          ),
-                          title: Text('Journal entry #${index + 1}'),
-                          subtitle: const Text(
-                            'A short excerpt from the journal...',
-                          ),
-                          trailing: const Text(
-                            '2d',
+                    if (!_activityReady) ...[
+                      const Center(child: CircularProgressIndicator()),
+                    ] else
+                      ValueListenableBuilder<Box>(
+                        valueListenable: _activityBox.listenable(keys: ['activities']),
+                        builder: (context, box, _) {
+                        final raw = box.get('activities', defaultValue: <dynamic>[]);
+                        final activities = <Map<String, String>>[];
+
+                        if (raw is List) {
+                          activities.addAll(
+                            raw.whereType<Map>().map((map) => map.cast<String, String>()),
+                          );
+                        }
+
+                        if (activities.isEmpty) {
+                          return const Text(
+                            'No recent activity yet. Actions like saving or favoriting books will appear here.',
                             style: TextStyle(color: Colors.grey),
-                          ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: activities.length,
+                          separatorBuilder: (_, __) => const Divider(height: 16),
+                          itemBuilder: (context, index) {
+                            final activity = activities[index];
+                            final message = activity['message'] ?? '';
+                            final timestamp = activity['timestamp'] ?? '';
+
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: CircleAvatar(
+                                backgroundColor: Colors.grey[200],
+                                child: const Icon(
+                                  Icons.history,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              title: Text(message),
+                              subtitle: Text(
+                                ActivityLog.formatAge(timestamp),
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

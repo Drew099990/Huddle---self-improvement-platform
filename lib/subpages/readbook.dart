@@ -1,6 +1,9 @@
 import "package:Huddle/subpages/favorites.dart";
 import "package:flutter/material.dart";
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../helpers/activity_log.dart';
+import '../screens/home.dart';
 import 'book_viewer.dart';
 
 class Rbooks extends StatefulWidget {
@@ -14,6 +17,101 @@ class Rbooks extends StatefulWidget {
 
 class _RbooksState extends State<Rbooks> {
   bool favorite = false;
+  late Box _favoriteBox;
+
+  Future<Box> _openFavoritesBox() async {
+    if (!Hive.isBoxOpen('favoriteBooks')) {
+      await Hive.initFlutter();
+      return await Hive.openBox('favoriteBooks');
+    }
+    return Hive.box('favoriteBooks');
+  }
+
+  List<Map<String, String>> _favoriteBookList() {
+    final raw = _favoriteBox.get('favorites', defaultValue: <dynamic>[]);
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((map) => map.cast<String, String>())
+          .toList();
+    }
+    return <Map<String, String>>[];
+  }
+
+  bool _isFavoriteBook(Map<String, String> book) {
+    final title = book['title'];
+    return _favoriteBookList().any((favorite) => favorite['title'] == title);
+  }
+
+  Future<void> _loadFavoriteState() async {
+    _favoriteBox = await _openFavoritesBox();
+    final isFavorite = _isFavoriteBook(widget.book.cast<String, String>());
+    if (mounted) {
+      setState(() {
+        favorite = isFavorite;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    _favoriteBox = await _openFavoritesBox();
+    final favorites = _favoriteBookList();
+    final title = widget.book['title'];
+    final isAlreadyFavorite = favorites.any((item) => item['title'] == title);
+
+    if (!isAlreadyFavorite && favorites.length >= 5) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Favorite limit reached'),
+          content: const Text(
+            'You can only save up to 5 favorite books. Remove one from favorites first, or use Add more to browse the library.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => Home()),
+                );
+              },
+              child: const Text('Add more'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    if (isAlreadyFavorite) {
+      favorites.removeWhere((item) => item['title'] == title);
+      await ActivityLog.add('Removed favorite book: ${widget.book['title']}');
+    } else {
+      favorites.add(widget.book.cast<String, String>());
+      await ActivityLog.add('Added favorite book: ${widget.book['title']}');
+    }
+
+    await _favoriteBox.put('favorites', favorites);
+
+    if (mounted) {
+      setState(() {
+        favorite = !isAlreadyFavorite;
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isAlreadyFavorite ? 'Removed from Favorites' : 'Added to Favorites',
+        ),
+      ),
+    );
+  }
 
   Future<void> _openLink(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -89,6 +187,12 @@ class _RbooksState extends State<Rbooks> {
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Error opening link: $e')));
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteState();
   }
 
   @override
@@ -180,25 +284,7 @@ class _RbooksState extends State<Rbooks> {
                       ),
                     ),
                     InkWell(
-                      onTap: () => {
-                        setState(() {
-                          favorite = !favorite;
-
-                          if (favorite) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Added to Favorites"),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Removed from Favorites"),
-                              ),
-                            );
-                          }
-                        }),
-                      },
+                      onTap: _toggleFavorite,
                       child: Container(
                         padding: EdgeInsets.all(5),
                         decoration: BoxDecoration(

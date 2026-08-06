@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "../subpages/readentry.dart";
 import "../helpers/journal_database.dart";
+import "../helpers/activity_log.dart";
 
 class Journal extends StatefulWidget {
   const Journal({super.key});
@@ -47,6 +48,8 @@ class _JournalState extends State<Journal> {
           goals: goals,
         ),
       );
+
+      await ActivityLog.add('Added journal entry');
 
       _gratitudeController.clear();
       _improvementController.clear();

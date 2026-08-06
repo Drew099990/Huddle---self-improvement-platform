@@ -25,6 +25,204 @@ class _readentryState extends State<readentry> {
     await _entriesFuture;
   }
 
+  Future<void> _deleteEntry(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color.fromARGB(255, 223, 228, 233),
+
+        title: const Text('Delete entry'),
+        content: const Text(
+          'Are you sure you want to delete this journal entry?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color.fromARGB(179, 104, 146, 165)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Color.fromARGB(255, 148, 60, 60)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await JournalDatabase.instance.delete(id);
+    await _refreshEntries();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Journal entry deleted.')));
+  }
+
+  Future<void> _showEditDialog(JournalEntry entry) async {
+    final gratitudeController = TextEditingController(text: entry.gratitude);
+    final improvementController = TextEditingController(
+      text: entry.improvement,
+    );
+    final goalsController = TextEditingController(text: entry.goals);
+
+    Widget buildField({
+      required IconData icon,
+      required TextEditingController controller,
+      required String hint,
+      required String counterText,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(top: 10),
+        width: MediaQuery.of(context).size.width * 0.80,
+        child: TextField(
+          controller: controller,
+          autocorrect: true,
+          maxLines: 3,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon),
+            border: OutlineInputBorder(
+              gapPadding: 10,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            hintText: hint,
+            counter: Text(
+              counterText,
+              style: const TextStyle(color: Color.fromARGB(255, 27, 59, 114)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color.fromARGB(255, 223, 228, 233),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  width: 2,
+                  color: const Color.fromARGB(137, 18, 57, 88),
+                ),
+              ),
+
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Edit journal entry #${entry.id}',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color.fromARGB(255, 33, 66, 109),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  buildField(
+                    icon: Icons.favorite_outline,
+                    controller: gratitudeController,
+                    hint: 'what are you grateful about?',
+                    counterText: 'share your progress',
+                  ),
+                  buildField(
+                    icon: Icons.alt_route_sharp,
+                    controller: improvementController,
+                    hint: 'how do you wish to build up on this?',
+                    counterText: 'share parts you wish to work on',
+                  ),
+                  buildField(
+                    icon: Icons.check_box_outlined,
+                    controller: goalsController,
+                    hint: 'how will you achieve your goals',
+                    counterText: 'share your ideas on achieving the goals',
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Color.fromARGB(115, 15, 69, 85),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final gratitude = gratitudeController.text.trim();
+                          final improvement = improvementController.text.trim();
+                          final goals = goalsController.text.trim();
+
+                          if (gratitude.isEmpty ||
+                              improvement.isEmpty ||
+                              goals.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please fill all journal fields.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          await JournalDatabase.instance.update(
+                            entry.copyWith(
+                              gratitude: gratitude,
+                              improvement: improvement,
+                              goals: goals,
+                            ),
+                          );
+
+                          await _refreshEntries();
+                          if (!mounted) return;
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Journal entry updated.'),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                            157,
+                            17,
+                            50,
+                            82,
+                          ),
+                        ),
+                        child: const Text(
+                          'Update',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,115 +339,7 @@ class _readentryState extends State<readentry> {
                               Row(
                                 children: [
                                   InkWell(
-                                    onTap: () => showDialog(
-                                      context: context,
-                                      builder: (_) => Container(
-                                        child: AlertDialog(
-                                          title: Text(
-                                            "Edit: Entry #${entry.id}",
-                                          ),
-                                          content: Container(
-                                            padding: EdgeInsets.all(10),
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              border: Border.all(
-                                                width: 2,
-                                                color: const Color.fromARGB(
-                                                  185,
-                                                  17,
-                                                  65,
-                                                  80,
-                                                ),
-                                              ),
-                                            ),
-                                            height: 300,
-                                            child: Column(
-                                              children: [
-                                                Divider(height: 2),
-                                                SizedBox(height: 10),
-                                                TextField(
-                                                  enabled: true,
-                                                  decoration: InputDecoration(
-                                                    fillColor:
-                                                        const Color.fromARGB(
-                                                          255,
-                                                          201,
-                                                          203,
-                                                          204,
-                                                        ),
-
-                                                    hintText: "Progress made",
-                                                    counterText: "Progress",
-                                                  ),
-                                                ),
-                                                TextField(
-                                                  enabled: true,
-                                                  decoration: InputDecoration(
-                                                    fillColor:
-                                                        const Color.fromARGB(
-                                                          255,
-                                                          201,
-                                                          203,
-                                                          204,
-                                                        ),
-
-                                                    hintText: "Room for growth",
-                                                    counterText: "Improvements",
-                                                  ),
-                                                ),
-                                                TextField(
-                                                  enabled: true,
-                                                  decoration: InputDecoration(
-                                                    fillColor:
-                                                        const Color.fromARGB(
-                                                          255,
-                                                          201,
-                                                          203,
-                                                          204,
-                                                        ),
-
-                                                    hintText: "Step to take",
-                                                    counterText: "Steps",
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  onTap: () => {
-                                                    Navigator.pop(context),
-                                                  },
-                                                  child: Container(
-                                                    padding: EdgeInsets.all(10),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                        width: 2,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            15,
-                                                          ),
-                                                      color:
-                                                          const Color.fromARGB(
-                                                            96,
-                                                            22,
-                                                            69,
-                                                            107,
-                                                          ),
-                                                    ),
-                                                    child: Text(
-                                                      "Update",
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                    onTap: () => _showEditDialog(entry),
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Container(
@@ -287,36 +377,41 @@ class _readentryState extends State<readentry> {
                                       ),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Container(
-                                      padding: EdgeInsets.all(5),
-                                      decoration: BoxDecoration(
-                                        color: const Color.fromARGB(
-                                          164,
-                                          121,
-                                          47,
-                                          36,
-                                        ),
-                                        border: Border.all(
-                                          width: 4,
+                                  InkWell(
+                                    onTap: () => _deleteEntry(entry.id!),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
                                           color: const Color.fromARGB(
-                                            96,
-                                            20,
-                                            52,
-                                            71,
+                                            164,
+                                            121,
+                                            47,
+                                            36,
+                                          ),
+                                          border: Border.all(
+                                            width: 4,
+                                            color: const Color.fromARGB(
+                                              96,
+                                              20,
+                                              52,
+                                              71,
+                                            ),
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            15,
                                           ),
                                         ),
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                      child: Icon(
-                                        color: Color.fromARGB(
-                                          255,
-                                          211,
-                                          188,
-                                          186,
+                                        child: Icon(
+                                          color: Color.fromARGB(
+                                            255,
+                                            211,
+                                            188,
+                                            186,
+                                          ),
+                                          Icons.delete_forever_outlined,
                                         ),
-                                        Icons.delete_forever_outlined,
                                       ),
                                     ),
                                   ),

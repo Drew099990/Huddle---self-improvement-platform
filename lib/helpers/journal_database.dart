@@ -79,7 +79,29 @@ class JournalDatabase {
   Future<JournalEntry> create(JournalEntry entry) async {
     final db = await database;
     final id = await db.insert('journal', entry.toMap());
+
     return entry.copyWith(id: id);
+  }
+
+  Future<int> update(JournalEntry entry) async {
+    final db = await database;
+    return db.update(
+      'journal',
+      entry.toMap(),
+      where: 'id = ?',
+      whereArgs: [entry.id],
+    );
+  }
+
+  Future<int> delete(int id) async {
+    final db = await database;
+    return db.delete('journal', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> countEntries() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT COUNT(*) FROM journal');
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
   Future<List<JournalEntry>> readAllEntries() async {
