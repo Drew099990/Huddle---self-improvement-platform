@@ -123,18 +123,29 @@ class _FavoritesState extends State<Favorites> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'No favorite books yet. Tap the heart icon on a book to add it.',
+                          'No favorite books yet.',
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const Home()),
                             );
                           },
-                          child: const Text('Browse books'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              32,
+                              73,
+                              92,
+                            ),
+                          ),
+                          child: const Text(
+                            'Browse books',
+                            style: TextStyle(color: Colors.white70),
+                          ),
                         ),
                       ],
                     ),
