@@ -1,10 +1,24 @@
 import "package:Huddle/subpages/favorites.dart";
+import "package:firebase_database/firebase_database.dart";
 import "package:flutter/material.dart";
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../helpers/activity_log.dart';
-import '../screens/home.dart';
 import 'book_viewer.dart';
+
+List<String> addCommentToList(
+  List<String> existingComments,
+  String rawComment,
+) {
+  final trimmed = rawComment.trim();
+  if (trimmed.isEmpty) {
+    return existingComments;
+  }
+
+  final comments = List<String>.from(existingComments);
+  comments.insert(0, trimmed);
+  return comments;
+}
 
 bool canToggleFavorite({
   required bool isAlreadyFavorite,
@@ -30,6 +44,206 @@ class _RbooksState extends State<Rbooks> {
   bool favorite = false;
   int limit = 5;
   late Box _favoriteBox;
+  final TextEditingController _commentController = TextEditingController();
+  List<String> _comments = [];
+
+  String _bookKey() {
+    final bookTitle = widget.book['title'] ?? 'daily_read';
+    return bookTitle
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  Future<void> _loadComments() async {
+    final ref = FirebaseDatabase.instance.ref('book_comments/${_bookKey()}');
+
+    try {
+      final snapshot = await ref.get();
+      final value = snapshot.value;
+      List<String> loadedComments = [];
+
+      if (value is List) {
+        loadedComments = value
+            .map((item) => item?.toString() ?? '')
+            .where((item) => item.trim().isNotEmpty)
+            .toList();
+      } else if (value is Map) {
+        loadedComments = value.values
+            .map((item) => item?.toString() ?? '')
+            .where((item) => item.trim().isNotEmpty)
+            .toList();
+      }
+
+      if (mounted) {
+        setState(() {
+          _comments = loadedComments;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _comments = [];
+        });
+      }
+    }
+  }
+
+  Future<void> _saveComment(String rawComment) async {
+    final trimmedComment = rawComment.trim();
+    if (trimmedComment.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a comment before submitting.'),
+        ),
+      );
+      return;
+    }
+
+    final updatedComments = addCommentToList(_comments, trimmedComment);
+    final ref = FirebaseDatabase.instance.ref('book_comments/${_bookKey()}');
+
+    try {
+      await ref.set(updatedComments);
+      if (mounted) {
+        setState(() {
+          _comments = updatedComments;
+          _commentController.clear();
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not save the comment. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
+
+  void _openCommentsSheet(BuildContext context) {
+    showModalBottomSheet(
+      backgroundColor: const Color.fromARGB(232, 221, 229, 235),
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Leave a Comment',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 27, 89, 117),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _commentController,
+                  maxLines: 2,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Write your comment here...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 244, 246, 247),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 88, 116, 129),
+                    ),
+                    onPressed: () async {
+                      final commentText = _commentController.text;
+                      Navigator.pop(sheetContext);
+                      await _saveComment(commentText);
+                    },
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'All comments',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color.fromARGB(255, 27, 89, 117),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  child: _comments.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            'No comments yet. Be the first to share your thoughts.',
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: _comments.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                _comments[index],
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Future<Box> _openFavoritesBox() async {
     if (!Hive.isBoxOpen('favoriteBooks')) {
@@ -83,8 +297,19 @@ class _RbooksState extends State<Rbooks> {
         builder: (context) => AlertDialog(
           backgroundColor: const Color.fromARGB(253, 221, 228, 233),
           title: const Text('Favorite limit reached'),
-          content: const Text(
-            'You can only save up to 5 favorite books. Upgrade to add more.',
+          content: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 223, 228, 233),
+              border: Border.all(
+                color: const Color.fromARGB(85, 52, 87, 75),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              'You can only save up to 5 favorite books. Upgrade to add more.',
+            ),
           ),
           actions: [
             TextButton(
@@ -156,9 +381,9 @@ class _RbooksState extends State<Rbooks> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color.fromARGB(
                             255,
-                            28,
-                            76,
-                            116,
+                            55,
+                            99,
+                            134,
                           ),
                         ),
                         child: const Text(
@@ -171,7 +396,7 @@ class _RbooksState extends State<Rbooks> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 28, 76, 116),
+                backgroundColor: const Color.fromARGB(255, 40, 80, 104),
               ),
               child: const Text(
                 'Upgrade',
@@ -289,6 +514,13 @@ class _RbooksState extends State<Rbooks> {
   void initState() {
     super.initState();
     _loadFavoriteState();
+    _loadComments();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   @override
@@ -448,26 +680,14 @@ class _RbooksState extends State<Rbooks> {
                     ),
 
                     InkWell(
-                      onTap: () async {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: const Color.fromARGB(
-                              148,
-                              34,
-                              39,
-                              58,
-                            ),
-                            content: Text("Currently Unavailable"),
-                          ),
-                        );
-                      },
+                      onTap: () => _openCommentsSheet(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           vertical: 7,
                           horizontal: 15,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 149, 182, 171),
+                          color: const Color.fromARGB(255, 119, 153, 142),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: const Color.fromARGB(255, 52, 87, 75),

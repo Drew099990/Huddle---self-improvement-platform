@@ -21,4 +21,18 @@ void main() {
       );
     });
   });
+
+  group('comment storage helpers', () {
+    test('adds a trimmed comment to the top of the list', () {
+      final comments = addCommentToList(['old'], '  new comment  ');
+
+      expect(comments, ['new comment', 'old']);
+    });
+
+    test('ignores empty comment text', () {
+      final comments = addCommentToList(['old'], '   ');
+
+      expect(comments, ['old']);
+    });
+  });
 }
