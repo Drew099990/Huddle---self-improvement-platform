@@ -63,9 +63,10 @@ class _FavoritesState extends State<Favorites> {
     if (mounted) setState(() {});
   }
 
-  // Removal is now ad-gated: confirming the dialog no longer removes the
-  // favorite directly. It only kicks off a rewarded ad; the book is removed
-  // solely inside the ad's onUserEarnedReward callback.
+  // Removal is ad-gated: confirming the dialog never removes the favorite
+  // directly. It only kicks off a rewarded ad; the book is removed solely
+  // inside the ad's onUserEarnedReward callback. There is no other path
+  // (paid or otherwise) that removes a favorite.
   Future<void> _confirmRemoveFavorite(String title) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -124,12 +125,13 @@ class _FavoritesState extends State<Favorites> {
     if (mounted) setState(() {});
   }
 
+  // Adding past the base limit is ad-gated too: this is the only way to
+  // raise the effective limit. There is no upgrade/paid bypass.
   void _watchAdForSlot() {
     _rewardedAdManager.showIfReady(
       onUserEarnedReward: (amount, type) {
         _grantBonusSlot();
         if (mounted) {
-          Navigator.of(context, rootNavigator: true).maybePop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -160,127 +162,6 @@ class _FavoritesState extends State<Favorites> {
   void dispose() {
     _rewardedAdManager.dispose();
     super.dispose();
-  }
-
-  void _showUpgradeDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color.fromARGB(255, 223, 228, 233),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        title: const Text(
-          'Upgrade to Premium',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(200, 27, 52, 77),
-          ),
-        ),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 420,
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(131, 55, 92, 114),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Perks("Remove all Ads"),
-                      Perks("Unlimited Favorites"),
-                      Perks("Access to All Games"),
-                      Perks("Become a Beta Tester"),
-                      Perks("Supports me ^_^"),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Secondary, free option — watch a rewarded ad instead of paying.
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(60, 55, 92, 114),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color.fromARGB(120, 55, 92, 114),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Not ready to upgrade?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(200, 27, 52, 77),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Watch a short ad to unlock $_bonusSlotsPerAd more favorite slot.",
-                        style: const TextStyle(
-                          color: Color.fromARGB(180, 27, 52, 77),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _watchAdForSlot,
-                          icon: const Icon(
-                            Icons.play_circle_outline,
-                            color: Colors.white70,
-                          ),
-                          label: const Text(
-                            'Watch ad for +1 slot',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(
-                              255,
-                              78,
-                              128,
-                              143,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Navigate to the upgrade page or perform upgrade action
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 50, 94, 129),
-            ),
-            child: const Text(
-              '\$9.99',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -396,25 +277,25 @@ class _FavoritesState extends State<Favorites> {
                           children: [
                             Expanded(
                               child: Text(
-                                'You have reached your $limit favorite book limit. Upgrade or watch an ad to add more.',
+                                'You have reached your $limit favorite book limit. Watch an ad to add more.',
                                 style: const TextStyle(
                                   color: Color.fromARGB(255, 42, 100, 122),
                                 ),
                               ),
                             ),
                             ElevatedButton(
-                              onPressed: _showUpgradeDialog,
+                              onPressed: _watchAdForSlot,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
-                                  137,
-                                  16,
-                                  46,
-                                  100,
+                                  255,
+                                  178,
+                                  58,
+                                  58,
                                 ),
                               ),
                               child: const Text(
-                                'Upgrade',
-                                style: TextStyle(color: Colors.white70),
+                                'Watch ad',
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ],

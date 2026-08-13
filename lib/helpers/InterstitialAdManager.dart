@@ -36,12 +36,12 @@ class InterstitialAdManager {
   bool _isLoading = false;
 
   /// Flip to false and fill in real IDs before release.
-  static const bool useTestAds = true;
+  static const bool useTestAds = false;
 
   String get _adUnitId {
     if (!useTestAds) {
-      if (Platform.isAndroid) return 'YOUR_ANDROID_INTERSTITIAL_ID';
-      if (Platform.isIOS) return 'YOUR_IOS_INTERSTITIAL_ID';
+      if (Platform.isAndroid) return 'ca-app-pub-8563885250863599/1793241580';
+      if (Platform.isIOS) return 'ca-app-pub-8563885250863599/1793241580';
     }
     // Google's official TEST interstitial IDs — safe during development.
     if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/1033173712';

@@ -4,11 +4,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 import '../helpers/activity_log.dart';
 import '../helpers/journal_database.dart';
 import '../helpers/RewardAD.dart';
-import '../helpers/revennuecat.dart';
 import "../subpages/minigame.dart";
 import "../subpages/favorites.dart";
 
@@ -29,14 +27,6 @@ class _ProfileState extends State<Profile> {
   bool _activityReady = false;
   int _journalCount = 0;
   String _installedDaysText = '0 days';
-  bool _upgradeMenu = false;
-
-  // --- Premium / RevenueCat state ---
-  bool _isPremium = false;
-  bool _premiumStatusLoading = true;
-  Package? _premiumPackage;
-  bool _packagesLoading = true;
-  bool _isPurchasing = false;
 
   // --- Broadcast posting limit ---
   // Free users get 1 broadcast per day. Extra posts for the same day are
@@ -106,8 +96,6 @@ class _ProfileState extends State<Profile> {
     super.initState();
     _setupHive();
     _rewardedAdManager.load();
-    _loadPremiumStatus();
-    _loadPremiumPackage();
   }
 
   @override
@@ -119,75 +107,25 @@ class _ProfileState extends State<Profile> {
 
   bool picSelect = false;
 
-  // --- Premium status + offering ---
-
-  Future<void> _loadPremiumStatus() async {
-    final entitled = await PurchaseService.instance.isEntitled();
-    if (!mounted) return;
-    setState(() {
-      _isPremium = entitled;
-      _premiumStatusLoading = false;
-    });
-  }
-
-  Future<void> _loadPremiumPackage() async {
-    final packages = await PurchaseService.instance.getAvailablePackages();
-    if (!mounted) return;
-    setState(() {
-      // Assumes a single premium package in the default offering.
-      // If you offer multiple tiers, pick the right one here instead
-      // of just taking the first.
-      _premiumPackage = packages.isNotEmpty ? packages.first : null;
-      _packagesLoading = false;
-    });
-  }
-
-  Future<void> _buyPremium(
-    StateSetter setSheetState,
-    BuildContext sheetContext,
-  ) async {
-    final package = _premiumPackage;
-    if (package == null || _isPurchasing) return;
-
-    setSheetState(() => _isPurchasing = true);
-    try {
-      final unlocked = await PurchaseService.instance.purchasePackage(package);
-      if (!mounted) return;
-      if (unlocked) {
-        setState(() => _isPremium = true);
-        setSheetState(() {});
-        if (Navigator.of(sheetContext).canPop()) {
-          Navigator.of(sheetContext).pop();
-        }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Welcome to premium! 🎉")));
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Purchase failed: $e")));
-    } finally {
-      if (mounted) setSheetState(() => _isPurchasing = false);
-    }
-  }
-
   Future<void> _pickProfileImage() async {
-    setState(() {});
-    picSelect = true;
+    setState(() => picSelect = true);
+
     final result = await FilePicker.pickFiles(
       type: FileType.image,
       allowMultiple: false,
     );
 
+    if (!mounted) return;
+
     if (result != null && result.files.single.path != null) {
       final path = result.files.single.path!;
       await _box.put('profileImagePath', path);
+      if (!mounted) return;
       setState(() {
         _selectedImagePath = path;
       });
     }
+
     setState(() {
       picSelect = false;
     });
@@ -252,7 +190,7 @@ class _ProfileState extends State<Profile> {
         builder: (context) => StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(10),
+              borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
             elevation: 10,
@@ -414,208 +352,6 @@ class _ProfileState extends State<Profile> {
     }
   }
 
-  void _showUpgradeSheet() {
-    if (mounted) {
-      setState(() {
-        _upgradeMenu = true;
-      });
-    }
-    try {
-      final controller = showBottomSheet(
-        context: context,
-        builder: (sheetContext) => StatefulBuilder(
-          builder: (sheetContext, setSheetState) => Container(
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(131, 55, 92, 114),
-            ),
-            height: 431,
-            width: MediaQuery.of(sheetContext).size.width * 1,
-            child: Column(
-              children: [
-                Icon(Icons.arrow_downward, color: Colors.black38),
-
-                Container(
-                  width: MediaQuery.of(sheetContext).size.width,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(151, 14, 71, 117),
-                  ),
-                  child: Column(
-                    children: [
-                      Divider(height: 10, thickness: 5),
-
-                      Text(
-                        "hello there, Friend (❁´◡`❁) ",
-                        style: TextStyle(
-                          color: Colors.black45,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      Text(
-                        "Upgrade to premium",
-                        style: TextStyle(
-                          color: Color.fromARGB(210, 248, 234, 209),
-                        ),
-                      ),
-                      Divider(height: 10),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 300,
-                  width: 600,
-                  padding: EdgeInsets.all(15),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Perks("Remove all Ads"),
-                      Perks("Unlimited Favorites"),
-                      Perks("Access to All Games"),
-                      Perks("Become a Beta Tester"),
-                      Perks("Supports me ^_^"),
-                      SizedBox(height: 15),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (_isPremium)
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 15,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(15),
-                                border: Border.all(
-                                  width: 4,
-                                  color: const Color.fromARGB(
-                                    210,
-                                    86,
-                                    101,
-                                    143,
-                                  ),
-                                ),
-                                color: const Color.fromARGB(210, 91, 125, 170),
-                              ),
-                              child: Text(
-                                "You're premium ✓",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color.fromARGB(
-                                    255,
-                                    235,
-                                    231,
-                                    183,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else if (_packagesLoading)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                              child: SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          else if (_premiumPackage == null)
-                            const Text(
-                              "No offering available right now",
-                              style: TextStyle(color: Colors.white70),
-                            )
-                          else
-                            InkWell(
-                              onTap: _isPurchasing
-                                  ? null
-                                  : () => _buyPremium(
-                                      setSheetState,
-                                      sheetContext,
-                                    ),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: 10,
-                                  horizontal: 15,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(
-                                    width: 4,
-                                    color: const Color.fromARGB(
-                                      210,
-                                      86,
-                                      101,
-                                      143,
-                                    ),
-                                  ),
-                                  color: _isPurchasing
-                                      ? const Color.fromARGB(120, 91, 125, 170)
-                                      : const Color.fromARGB(210, 91, 125, 170),
-                                ),
-                                child: _isPurchasing
-                                    ? const SizedBox(
-                                        height: 18,
-                                        width: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        _premiumPackage!
-                                            .storeProduct
-                                            .priceString,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color.fromARGB(
-                                            255,
-                                            235,
-                                            231,
-                                            183,
-                                          ),
-                                        ),
-                                      ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: MediaQuery.of(sheetContext).size.width,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(151, 14, 71, 117),
-                  ),
-                  padding: EdgeInsets.only(top: 5, bottom: 5),
-                  child: Text(
-                    "Thanks for the support, appreciate the help !!!",
-                    style: TextStyle(
-                      color: const Color.fromARGB(255, 185, 179, 161),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-      controller.closed.then((_) {
-        if (mounted) {
-          setState(() {
-            _upgradeMenu = false;
-          });
-        }
-      });
-    } catch (e) {
-      print(e);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -628,9 +364,7 @@ class _ProfileState extends State<Profile> {
         title: Text(
           'Personal view',
           style: TextStyle(
-            color: _upgradeMenu
-                ? const Color.fromARGB(139, 25, 70, 155)
-                : const Color.fromARGB(29, 25, 70, 155),
+            color: const Color.fromARGB(110, 25, 70, 155),
             letterSpacing: 3,
             fontWeight: FontWeight.w600,
           ),
@@ -712,90 +446,18 @@ class _ProfileState extends State<Profile> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'William',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              '@william',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        if (_premiumStatusLoading)
-                          const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        else if (_isPremium)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(134, 14, 122, 71),
-                              border: Border.all(
-                                width: 2,
-                                color: Colors.black54,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: const Text(
-                              "premium ✓",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        else
-                          InkWell(
-                            onTap: _showUpgradeSheet,
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(134, 165, 57, 14),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color.fromARGB(
-                                      255,
-                                      37,
-                                      78,
-                                      69,
-                                    ).withOpacity(0.4),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  width: 2,
-                                  color: Colors.black54,
-                                ),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: const Text(
-                                "upgrade",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.amberAccent,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                    const Text(
+                      'William',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '@william',
+                      style: TextStyle(color: Colors.grey),
                     ),
 
                     const SizedBox(height: 18),
@@ -817,7 +479,9 @@ class _ProfileState extends State<Profile> {
                           size.width,
                         ),
                         const SizedBox(width: 8),
-                        _buildStatCard('Posts', '4 ', Icons.forum, size.width),
+                        // NOTE: still a hardcoded placeholder ('4') — not
+                        // wired up to real broadcast/post data.
+                        _buildStatCard('Posts', '4', Icons.forum, size.width),
                       ],
                     ),
 
@@ -984,28 +648,6 @@ class _ProfileState extends State<Profile> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget Perks(String perk) {
-    return Row(
-      children: [
-        Icon(
-          Icons.star_border_outlined,
-          size: 40,
-          color: const Color.fromARGB(242, 197, 204, 218),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            perk,
-            style: TextStyle(
-              fontSize: 15,
-              color: const Color.fromARGB(255, 246, 246, 248),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

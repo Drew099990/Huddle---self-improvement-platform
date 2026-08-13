@@ -27,8 +27,9 @@ bool canToggleFavorite({
   required int limit,
 }) {
   // Removing a favorite is always attemptable — whether it actually happens
-  // is gated later by the watch-ad/upgrade flow, not by the limit here.
-  // Only *adding* a new favorite is blocked once the limit is reached.
+  // is gated later, unconditionally, by the watch-ad flow, not by the
+  // limit here. Only *adding* a new favorite is blocked once the limit
+  // (base + any ad-earned bonus slots) is reached.
   if (isAlreadyFavorite) {
     return true;
   }
@@ -46,7 +47,15 @@ class Rbooks extends StatefulWidget {
 
 class _RbooksState extends State<Rbooks> {
   bool favorite = false;
-  int limit = 5;
+
+  // Base free limit. Each rewarded ad watched to unlock an addition past
+  // this limit grants one permanent bonus slot (persisted in Hive), so
+  // the effective limit is `_baseLimit + _bonusFavoriteSlots`.
+  static const int _baseLimit = 5;
+  int _bonusFavoriteSlots = 0;
+
+  int get _favoriteLimit => _baseLimit + _bonusFavoriteSlots;
+
   late Box _favoriteBox;
   final TextEditingController _commentController = TextEditingController();
   List<String> _comments = [];
@@ -278,16 +287,26 @@ class _RbooksState extends State<Rbooks> {
   Future<void> _loadFavoriteState() async {
     _favoriteBox = await _openFavoritesBox();
     final isFavorite = _isFavoriteBook(widget.book.cast<String, String>());
+    final bonusSlots =
+        _favoriteBox.get('bonusFavoriteSlots', defaultValue: 0) as int;
     if (mounted) {
       setState(() {
         favorite = isFavorite;
+        _bonusFavoriteSlots = bonusSlots;
       });
     }
   }
 
-  // Removing a favorite is now ad-gated: this only decides WHETHER a removal
-  // is allowed (limit checks, confirmation) and hands off the actual removal
-  // to _watchAdForRemoval, which only removes inside onUserEarnedReward.
+  Future<void> _grantBonusFavoriteSlot() async {
+    _bonusFavoriteSlots += 1;
+    await _favoriteBox.put('bonusFavoriteSlots', _bonusFavoriteSlots);
+    if (mounted) setState(() {});
+  }
+
+  // Adding: allowed for free up to `_favoriteLimit`. Past that, adding is
+  // only possible by watching a rewarded ad (see `_watchAdForAddition`).
+  // Removing: always requires watching a rewarded ad, with no other way
+  // around it — there's no upgrade/paid bypass for either action.
   Future<void> _toggleFavorite() async {
     _favoriteBox = await _openFavoritesBox();
     final favorites = _favoriteBookList();
@@ -297,141 +316,115 @@ class _RbooksState extends State<Rbooks> {
     final canToggle = canToggleFavorite(
       isAlreadyFavorite: isAlreadyFavorite,
       favoritesCount: favorites.length,
-      limit: limit,
+      limit: _favoriteLimit,
     );
 
-    if (!canToggle) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: const Color.fromARGB(253, 221, 228, 233),
-          title: const Text('Favorite limit reached'),
-          content: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 223, 228, 233),
-              border: Border.all(
-                color: const Color.fromARGB(85, 52, 87, 75),
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              'You can only save up to 5 favorite books. Upgrade to add more.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Color.fromARGB(108, 32, 66, 117)),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showUpgradeDialog();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 40, 80, 104),
-              ),
-              child: const Text(
-                'Upgrade',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-          ],
-        ),
-      );
+    if (isAlreadyFavorite) {
+      // Removal always requires watching an ad — no other path removes it.
+      await _confirmRemoveFavorite(title);
       return;
     }
 
-    if (isAlreadyFavorite) {
-      // Removal path: don't remove yet — confirm, then require a watched ad
-      // or an upgrade.
-      await _confirmRemoveFavorite(title);
-    } else {
-      favorites.add(widget.book.cast<String, String>());
-      await _favoriteBox.put('favorites', favorites);
-      await ActivityLog.add('Added favorite book: ${widget.book['title']}');
-
-      if (mounted) {
-        setState(() {
-          favorite = true;
-        });
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Added to Favorites')));
+    if (!canToggle) {
+      // Limit reached — the only way to add another is to watch an ad.
+      await _confirmAddPastLimit();
+      return;
     }
+
+    favorites.add(widget.book.cast<String, String>());
+    await _favoriteBox.put('favorites', favorites);
+    await ActivityLog.add('Added favorite book: ${widget.book['title']}');
+
+    if (mounted) {
+      setState(() {
+        favorite = true;
+      });
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Added to Favorites')));
   }
 
-  void _showUpgradeDialog() {
-    showDialog(
+  Future<void> _confirmAddPastLimit() async {
+    final choice = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color.fromARGB(255, 223, 228, 233),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        title: const Text(
-          'Upgrade to Premium',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(200, 27, 52, 77),
-          ),
-        ),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 420,
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(131, 55, 92, 114),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Perks("Remove all Ads"),
-                      Perks("Unlimited Favorites"),
-                      Perks("Access to All Games"),
-                      Perks("Become a Beta Tester"),
-                      Perks("Supports me ^_^"),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+        backgroundColor: const Color.fromARGB(253, 221, 228, 233),
+        title: const Text('Favorite limit reached'),
+        content: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 223, 228, 233),
+            border: Border.all(
+              color: const Color.fromARGB(85, 52, 87, 75),
+              width: 2,
             ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'You can save up to $_favoriteLimit favorite books right now. '
+            'Watch a short ad to unlock one more slot.',
           ),
         ),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color.fromARGB(108, 32, 66, 117)),
+            ),
+          ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Navigate to the upgrade page or perform upgrade action
-            },
+            onPressed: () => Navigator.of(context).pop('watch_ad'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 55, 99, 134),
+              backgroundColor: const Color.fromARGB(255, 178, 58, 58),
             ),
             child: const Text(
-              '\$9.99',
-              style: TextStyle(color: Colors.white70),
+              'Watch ad to add',
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
       ),
+    );
+
+    if (choice == 'watch_ad') {
+      _watchAdForAddition();
+    }
+  }
+
+  void _watchAdForAddition() {
+    _rewardedAdManager.showIfReady(
+      onUserEarnedReward: (amount, type) async {
+        await _grantBonusFavoriteSlot();
+
+        final favorites = _favoriteBookList();
+        final title = widget.book['title'];
+        final alreadyThere = favorites.any((item) => item['title'] == title);
+
+        if (!alreadyThere) {
+          favorites.add(widget.book.cast<String, String>());
+          await _favoriteBox.put('favorites', favorites);
+          await ActivityLog.add('Added favorite book: ${widget.book['title']}');
+        }
+
+        if (mounted) {
+          setState(() {
+            favorite = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Slot unlocked — added to Favorites')),
+          );
+        }
+      },
+      onNotReady: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ad not ready yet — try again in a moment.'),
+          ),
+        );
+      },
     );
   }
 
@@ -443,22 +436,12 @@ class _RbooksState extends State<Rbooks> {
       builder: (_) => AlertDialog(
         title: const Text('Remove favorite?'),
         content: Text(
-          'Watch a short ad, or upgrade to premium, to remove "$title" from your favorites.',
+          'Watch a short ad to remove "$title" from your favorites.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop('upgrade'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 40, 80, 104),
-            ),
-            child: const Text(
-              'Upgrade',
-              style: TextStyle(color: Colors.white70),
-            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop('watch_ad'),
@@ -476,8 +459,6 @@ class _RbooksState extends State<Rbooks> {
 
     if (choice == 'watch_ad') {
       _watchAdForRemoval(title);
-    } else if (choice == 'upgrade') {
-      _showUpgradeDialog();
     }
   }
 
@@ -791,31 +772,4 @@ class _RbooksState extends State<Rbooks> {
       ),
     );
   }
-}
-
-Widget Perks(String perk) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          Icons.star_border_outlined,
-          size: 34,
-          color: const Color.fromARGB(242, 197, 204, 218),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            perk,
-            softWrap: true,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Color.fromARGB(255, 246, 246, 248),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }
