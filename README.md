@@ -1,6 +1,6 @@
 # huddle
 
-A new Flutter project.
+A new self improvement resource.
 
 ## Getting Started
 
