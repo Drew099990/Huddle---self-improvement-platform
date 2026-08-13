@@ -1,7 +1,10 @@
 import "dart:async";
+import "dart:io";
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import "../elements/books.dart";
 import "../elements/audio_books.dart";
 import "../elements/vidoes.dart";
@@ -24,6 +27,20 @@ class _HomeState extends State<Home> {
 
   String show = "Currently available books";
 
+  // ---- Interstitial ad state ----
+  InterstitialAd? _interstitialAd;
+  int _switchCount = 0;
+  static const int _switchesBetweenAds = 3; // show every 3rd category switch
+
+  String get _interstitialAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-3940256099942544/1033173712'; // TEST ID
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-3940256099942544/4411468910'; // TEST ID
+    }
+    throw UnsupportedError('Unsupported platform');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -31,11 +48,13 @@ class _HomeState extends State<Home> {
     _subscription = _connectivity.onConnectivityChanged.listen(
       _updateConnectionStatus,
     );
+    _loadInterstitialAd();
   }
 
   @override
   void dispose() {
     _subscription.cancel();
+    _interstitialAd?.dispose();
     super.dispose();
   }
 
@@ -54,11 +73,55 @@ class _HomeState extends State<Home> {
     });
   }
 
+  // ---- Interstitial ad logic ----
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: _interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+          _interstitialAd!.fullScreenContentCallback =
+              FullScreenContentCallback(
+                onAdDismissedFullScreenContent: (ad) {
+                  ad.dispose();
+                  _interstitialAd = null;
+                  _loadInterstitialAd(); // preload the next one
+                },
+                onAdFailedToShowFullScreenContent: (ad, error) {
+                  ad.dispose();
+                  _interstitialAd = null;
+                  _loadInterstitialAd();
+                },
+              );
+        },
+        onAdFailedToLoad: (error) {
+          if (kDebugMode) print('Interstitial failed to load: $error');
+          _interstitialAd = null;
+        },
+      ),
+    );
+  }
+
+  void _maybeShowInterstitial() {
+    _switchCount++;
+    if (_switchCount >= _switchesBetweenAds) {
+      _switchCount = 0;
+      if (_interstitialAd != null) {
+        _interstitialAd!.show();
+      } else {
+        _loadInterstitialAd(); // wasn't ready — load for next time
+      }
+    }
+  }
+
   void _book() {
     setState(() {
       chosen = 0;
       show = "Currently available books";
     });
+    _maybeShowInterstitial();
   }
 
   void _audiobooks() {
@@ -66,6 +129,7 @@ class _HomeState extends State<Home> {
       chosen = 1;
       show = "Currently available audiobooks";
     });
+    _maybeShowInterstitial();
   }
 
   void _videos() {
@@ -73,6 +137,7 @@ class _HomeState extends State<Home> {
       chosen = 2;
       show = "Currently available videos";
     });
+    _maybeShowInterstitial();
   }
 
   @override

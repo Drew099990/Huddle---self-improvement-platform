@@ -1,12 +1,17 @@
 import "dart:async";
-
+import "package:firebase_auth/firebase_auth.dart";
+import "../helpers/Bannner.dart";
 import "package:flutter/material.dart";
-import "../screens/register.dart";
 
 class Login extends StatefulWidget {
-  const Login({super.key, required this.onLogin});
+  const Login({
+    super.key,
+    required this.onLogin,
+    required this.onSwitchToRegister,
+  });
 
   final Function(bool) onLogin;
+  final VoidCallback onSwitchToRegister;
 
   @override
   State<Login> createState() => _LoginState();
@@ -23,6 +28,120 @@ class _LoginState extends State<Login> {
   bool username_valid = true;
 
   double rad = 0;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> _login() async {
+    // Reset validation state
+    setState(() {
+      username_valid = true;
+      password_valid = true;
+      userCounter = "username";
+      passwordCounter = "password";
+    });
+
+    if (_name.text.isEmpty) {
+      setState(() {
+        username_valid = false;
+        userCounter = "username is missing.";
+      });
+    }
+    if (_password.text.isEmpty) {
+      setState(() {
+        password_valid = false;
+        passwordCounter = "password is missing";
+      });
+    }
+
+    if (_name.text.isEmpty || _password.text.isEmpty) {
+      // Reset the messages after a short delay, same as before
+      Timer(Duration(seconds: 2), () {
+        if (!mounted) return;
+        setState(() {
+          userCounter = "username";
+          passwordCounter = "password";
+          username_valid = true;
+          password_valid = true;
+        });
+      });
+      return;
+    }
+
+    setState(() {
+      not_Loading = false;
+    });
+
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _name.text.trim(),
+        password: _password.text,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        not_Loading = true;
+      });
+      widget.onLogin(true);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+      switch (e.code) {
+        case "user-not-found":
+          message = "No account found for that username.";
+          break;
+        case "wrong-password":
+          message = "Incorrect password.";
+          break;
+        case "invalid-email":
+          message = "That email address is invalid.";
+          break;
+        case "invalid-credential":
+          message = "Username or password is incorrect.";
+          break;
+        case "user-disabled":
+          message = "This account has been disabled.";
+          break;
+        case "too-many-requests":
+          message = "Too many attempts. Try again later.";
+          break;
+        default:
+          message = e.message ?? "Login failed. Please try again.";
+      }
+
+      setState(() {
+        not_Loading = true;
+        username_valid = false;
+        password_valid = false;
+        userCounter = message;
+        passwordCounter = message;
+      });
+
+      Timer(Duration(seconds: 3), () {
+        if (!mounted) return;
+        setState(() {
+          userCounter = "username";
+          passwordCounter = "password";
+          username_valid = true;
+          password_valid = true;
+        });
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        not_Loading = true;
+        username_valid = false;
+        userCounter = "Something went wrong. Please try again.";
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _password.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,8 +210,9 @@ class _LoginState extends State<Login> {
                     child: TextField(
                       autocorrect: true,
                       controller: _name,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: " username",
+                        hintText: " email",
                         counter: Text(
                           userCounter,
                           style: TextStyle(
@@ -107,7 +227,7 @@ class _LoginState extends State<Login> {
                         ),
                       ),
 
-                      enabled: true,
+                      enabled: not_Loading,
                     ),
                   ),
                   SizedBox(height: 10),
@@ -115,7 +235,8 @@ class _LoginState extends State<Login> {
                     width: MediaQuery.of(context).size.width * 0.80,
                     height: 70,
                     child: TextField(
-                      autocorrect: true,
+                      autocorrect: false,
+                      obscureText: true,
                       controller: _password,
                       decoration: InputDecoration(
                         hintText: "password",
@@ -133,19 +254,12 @@ class _LoginState extends State<Login> {
                         ),
                       ),
 
-                      enabled: true,
+                      enabled: not_Loading,
                     ),
                   ),
                   SizedBox(height: 18),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Register(onRegister: (_) {}),
-                        ),
-                      );
-                    },
+                    onPressed: not_Loading ? widget.onSwitchToRegister : null,
                     child: Text(
                       "create new account?",
                       style: TextStyle(
@@ -156,48 +270,7 @@ class _LoginState extends State<Login> {
                   ),
 
                   InkWell(
-                    onTap: () {
-                      setState(() {
-                        not_Loading = false;
-                      });
-
-                      if (_name.text.isNotEmpty && _password.text.isNotEmpty) {
-                        Timer(Duration(seconds: 2), () {
-                          setState(() {
-                            widget.onLogin(true);
-                            not_Loading = true;
-                          });
-                        });
-                      }
-
-                      if (_name.text.isEmpty) {
-                        setState(() {
-                          username_valid = false;
-                          userCounter = "username is missing.";
-
-                          Timer(Duration(seconds: 2), () {
-                            setState(() {
-                              not_Loading = true;
-                              userCounter = "username";
-                              username_valid = true;
-                            });
-                          });
-                        });
-                      }
-                      if (_password.text.isEmpty) {
-                        setState(() {
-                          password_valid = false;
-                          passwordCounter = "password is missing";
-                          Timer(Duration(seconds: 2), () {
-                            setState(() {
-                              not_Loading = true;
-                              passwordCounter = "password";
-                              password_valid = true;
-                            });
-                          });
-                        });
-                      }
-                    },
+                    onTap: not_Loading ? _login : null,
                     child: AnimatedContainer(
                       duration: Duration(seconds: 4),
                       decoration: BoxDecoration(
@@ -217,6 +290,7 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                   ),
+
                   SizedBox(height: 20),
                   not_Loading
                       ? Text(
@@ -228,6 +302,8 @@ class _LoginState extends State<Login> {
                           strokeWidth: 2,
                           trackGap: 1,
                         ),
+                  SizedBox(height: 4),
+                  BannerAdWidget(),
                 ],
               ),
             ),

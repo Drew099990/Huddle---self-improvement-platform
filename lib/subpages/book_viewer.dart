@@ -4,7 +4,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String url;
-  PdfViewerPage({super.key, required this.url});
+  const PdfViewerPage({super.key, required this.url});
 
   @override
   State<PdfViewerPage> createState() => _PdfViewerPageState();
@@ -70,7 +70,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                         color: const Color.fromARGB(144, 22, 39, 97),
                       ),
                     ),
-                    content: Container(
+                    content: SizedBox(
                       height: 200,
                       child: ListView(
                         children: [

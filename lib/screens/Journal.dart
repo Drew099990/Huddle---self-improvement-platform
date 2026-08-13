@@ -57,7 +57,7 @@ class _JournalState extends State<Journal> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+          backgroundColor: Color.fromARGB(148, 34, 39, 58),
           content: Text('Journal entry saved successfully.'),
         ),
       );

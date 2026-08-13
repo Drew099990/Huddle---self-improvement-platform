@@ -1,7 +1,7 @@
 /// Core chess rules: board representation, move generation, check/checkmate
 /// detection. Deliberately simplified (no castling / en passant) to keep the
 /// engine easy to follow, while still enforcing legal, non-self-check moves.
-library chess_engine;
+library;
 
 enum PieceType { pawn, knight, bishop, rook, queen, king }
 
@@ -34,7 +34,9 @@ class ChessPiece {
       PieceType.knight: '♞',
       PieceType.pawn: '♟',
     };
-    return color == PieceColor.white ? whiteSymbols[type]! : blackSymbols[type]!;
+    return color == PieceColor.white
+        ? whiteSymbols[type]!
+        : blackSymbols[type]!;
   }
 }
 
@@ -43,8 +45,14 @@ class Move {
   final ChessPiece? captured;
   final bool isPromotion;
 
-  Move(this.fromRow, this.fromCol, this.toRow, this.toCol,
-      {this.captured, this.isPromotion = false});
+  Move(
+    this.fromRow,
+    this.fromCol,
+    this.toRow,
+    this.toCol, {
+    this.captured,
+    this.isPromotion = false,
+  });
 }
 
 typedef Board = List<List<ChessPiece?>>;
@@ -87,7 +95,8 @@ class ChessEngine {
 
   /// Pseudo-legal moves for the piece at (r,c) on [engine.board] — i.e. moves
   /// that follow piece movement rules but may leave the king in check.
-  List<Move> pseudoLegalMoves(int r, int c) => _pseudoLegalMovesOnBoard(r, c, board);
+  List<Move> pseudoLegalMoves(int r, int c) =>
+      _pseudoLegalMovesOnBoard(r, c, board);
 
   List<Move> _pseudoLegalMovesOnBoard(int r, int c, Board b) {
     final piece = b[r][c];
@@ -115,40 +124,90 @@ class ChessEngine {
         }
         for (final dc in [-1, 1]) {
           final nr = r + dir, nc = c + dc;
-          if (inBounds(nr, nc) && b[nr][nc] != null && b[nr][nc]!.color != piece.color) {
+          if (inBounds(nr, nc) &&
+              b[nr][nc] != null &&
+              b[nr][nc]!.color != piece.color) {
             final promo = (nr == 0 || nr == 7);
-            moves.add(Move(r, c, nr, nc, captured: b[nr][nc], isPromotion: promo));
+            moves.add(
+              Move(r, c, nr, nc, captured: b[nr][nc], isPromotion: promo),
+            );
           }
         }
         break;
       case PieceType.knight:
         const deltas = [
-          [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-          [1, -2], [1, 2], [2, -1], [2, 1],
+          [-2, -1],
+          [-2, 1],
+          [-1, -2],
+          [-1, 2],
+          [1, -2],
+          [1, 2],
+          [2, -1],
+          [2, 1],
         ];
         for (final d in deltas) {
           addIfValid(r + d[0], c + d[1]);
         }
         break;
       case PieceType.bishop:
-        _slideMoves(r, c, piece, [[-1, -1], [-1, 1], [1, -1], [1, 1]], moves, b);
+        _slideMoves(
+          r,
+          c,
+          piece,
+          [
+            [-1, -1],
+            [-1, 1],
+            [1, -1],
+            [1, 1],
+          ],
+          moves,
+          b,
+        );
         break;
       case PieceType.rook:
-        _slideMoves(r, c, piece, [[-1, 0], [1, 0], [0, -1], [0, 1]], moves, b);
+        _slideMoves(
+          r,
+          c,
+          piece,
+          [
+            [-1, 0],
+            [1, 0],
+            [0, -1],
+            [0, 1],
+          ],
+          moves,
+          b,
+        );
         break;
       case PieceType.queen:
         _slideMoves(
-            r,
-            c,
-            piece,
-            [[-1, -1], [-1, 1], [1, -1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]],
-            moves,
-            b);
+          r,
+          c,
+          piece,
+          [
+            [-1, -1],
+            [-1, 1],
+            [1, -1],
+            [1, 1],
+            [-1, 0],
+            [1, 0],
+            [0, -1],
+            [0, 1],
+          ],
+          moves,
+          b,
+        );
         break;
       case PieceType.king:
         const deltas = [
-          [-1, -1], [-1, 0], [-1, 1], [0, -1],
-          [0, 1], [1, -1], [1, 0], [1, 1],
+          [-1, -1],
+          [-1, 0],
+          [-1, 1],
+          [0, -1],
+          [0, 1],
+          [1, -1],
+          [1, 0],
+          [1, 1],
         ];
         for (final d in deltas) {
           addIfValid(r + d[0], c + d[1]);
@@ -159,7 +218,13 @@ class ChessEngine {
   }
 
   void _slideMoves(
-      int r, int c, ChessPiece piece, List<List<int>> dirs, List<Move> moves, Board b) {
+    int r,
+    int c,
+    ChessPiece piece,
+    List<List<int>> dirs,
+    List<Move> moves,
+    Board b,
+  ) {
     for (final d in dirs) {
       int nr = r + d[0], nc = c + d[1];
       while (inBounds(nr, nc)) {
@@ -221,11 +286,32 @@ class ChessEngine {
     }
   }
 
-  bool _slideAttacks(int r, int c, int tr, int tc, Board b,
-      {bool diagonal = false, bool straight = false}) {
+  bool _slideAttacks(
+    int r,
+    int c,
+    int tr,
+    int tc,
+    Board b, {
+    bool diagonal = false,
+    bool straight = false,
+  }) {
     final dirs = <List<int>>[];
-    if (diagonal) dirs.addAll([[-1, -1], [-1, 1], [1, -1], [1, 1]]);
-    if (straight) dirs.addAll([[-1, 0], [1, 0], [0, -1], [0, 1]]);
+    if (diagonal) {
+      dirs.addAll([
+        [-1, -1],
+        [-1, 1],
+        [1, -1],
+        [1, 1],
+      ]);
+    }
+    if (straight) {
+      dirs.addAll([
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ]);
+    }
     for (final d in dirs) {
       int nr = r + d[0], nc = c + d[1];
       while (inBounds(nr, nc)) {
@@ -241,7 +327,9 @@ class ChessEngine {
   bool isInCheck(PieceColor color, Board b) {
     final kingPos = findKing(color, b);
     if (kingPos == null) return false;
-    final opponent = color == PieceColor.white ? PieceColor.black : PieceColor.white;
+    final opponent = color == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
     return isSquareAttacked(kingPos[0], kingPos[1], opponent, b);
   }
 
@@ -252,7 +340,11 @@ class ChessEngine {
     if (piece == null) return newBoard;
     piece.hasMoved = true;
     if (move.isPromotion) {
-      newBoard[move.toRow][move.toCol] = ChessPiece(PieceType.queen, piece.color, hasMoved: true);
+      newBoard[move.toRow][move.toCol] = ChessPiece(
+        PieceType.queen,
+        piece.color,
+        hasMoved: true,
+      );
     } else {
       newBoard[move.toRow][move.toCol] = piece;
     }
@@ -296,7 +388,8 @@ class ChessEngine {
 
   bool get isCheckmate => isInCheck(turn, board) && allLegalMoves(turn).isEmpty;
 
-  bool get isStalemate => !isInCheck(turn, board) && allLegalMoves(turn).isEmpty;
+  bool get isStalemate =>
+      !isInCheck(turn, board) && allLegalMoves(turn).isEmpty;
 
   void makeMove(Move move) {
     board = applyMove(board, move);

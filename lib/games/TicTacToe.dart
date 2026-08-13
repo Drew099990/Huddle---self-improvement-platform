@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import "../subpages/minigame.dart";
 
 class TicTacToeApp extends StatelessWidget {
   const TicTacToeApp({super.key});

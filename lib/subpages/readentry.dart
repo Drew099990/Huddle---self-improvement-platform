@@ -293,10 +293,10 @@ class _readentryState extends State<readentry> {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
-                  SizedBox(height: 150),
+                  SizedBox(height: 300),
                   Center(
                     child: Text(
-                      'No journal entries yet. Pull to refresh after saving one.',
+                      'No journal entries yet.',
                       textAlign: TextAlign.center,
                     ),
                   ),
