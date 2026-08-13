@@ -4,6 +4,7 @@ import "package:flutter/material.dart";
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../helpers/activity_log.dart';
+import '../helpers/RewardAD.dart';
 import 'book_viewer.dart';
 
 List<String> addCommentToList(
@@ -25,8 +26,11 @@ bool canToggleFavorite({
   required int favoritesCount,
   required int limit,
 }) {
+  // Removing a favorite is always attemptable — whether it actually happens
+  // is gated later by the watch-ad/upgrade flow, not by the limit here.
+  // Only *adding* a new favorite is blocked once the limit is reached.
   if (isAlreadyFavorite) {
-    return favoritesCount >= limit;
+    return true;
   }
   return favoritesCount < limit;
 }
@@ -46,6 +50,8 @@ class _RbooksState extends State<Rbooks> {
   late Box _favoriteBox;
   final TextEditingController _commentController = TextEditingController();
   List<String> _comments = [];
+
+  final RewardedAdManager _rewardedAdManager = RewardedAdManager();
 
   String _bookKey() {
     final bookTitle = widget.book['title'] ?? 'daily_read';
@@ -279,6 +285,9 @@ class _RbooksState extends State<Rbooks> {
     }
   }
 
+  // Removing a favorite is now ad-gated: this only decides WHETHER a removal
+  // is allowed (limit checks, confirmation) and hands off the actual removal
+  // to _watchAdForRemoval, which only removes inside onUserEarnedReward.
   Future<void> _toggleFavorite() async {
     _favoriteBox = await _openFavoritesBox();
     final favorites = _favoriteBookList();
@@ -322,78 +331,7 @@ class _RbooksState extends State<Rbooks> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    backgroundColor: const Color.fromARGB(255, 223, 228, 233),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-                    contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    title: const Text(
-                      'Upgrade to Premium',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(200, 27, 52, 77),
-                      ),
-                    ),
-
-                    content: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: 420,
-                        maxHeight: MediaQuery.of(context).size.height * 0.75,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(131, 55, 92, 114),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Perks("Remove all Ads"),
-                                  Perks("Unlimited Favorites"),
-                                  Perks("Access to All Games"),
-                                  Perks("Become a Beta Tester"),
-                                  Perks("Supports me ^_^"),
-                                  const SizedBox(height: 12),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                      ),
-                    ),
-                    actions: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          // Navigate to the upgrade page or perform upgrade action
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            55,
-                            99,
-                            134,
-                          ),
-                        ),
-                        child: const Text(
-                          '\$9.99',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                _showUpgradeDialog();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 40, 80, 104),
@@ -409,28 +347,164 @@ class _RbooksState extends State<Rbooks> {
       return;
     }
 
-    if (isAlreadyFavorite && favorites.length >= limit) {
-      favorites.removeWhere((item) => item['title'] == title);
-      await ActivityLog.add('Removed favorite book: ${widget.book['title']}');
+    if (isAlreadyFavorite) {
+      // Removal path: don't remove yet — confirm, then require a watched ad
+      // or an upgrade.
+      await _confirmRemoveFavorite(title);
     } else {
       favorites.add(widget.book.cast<String, String>());
+      await _favoriteBox.put('favorites', favorites);
       await ActivityLog.add('Added favorite book: ${widget.book['title']}');
+
+      if (mounted) {
+        setState(() {
+          favorite = true;
+        });
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to Favorites')));
     }
+  }
 
-    await _favoriteBox.put('favorites', favorites);
-
-    if (mounted) {
-      setState(() {
-        favorite = !isAlreadyFavorite;
-      });
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isAlreadyFavorite ? 'Removed from Favorites' : 'Added to Favorites',
+  void _showUpgradeDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color.fromARGB(255, 223, 228, 233),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        title: const Text(
+          'Upgrade to Premium',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(200, 27, 52, 77),
+          ),
         ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 420,
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(131, 55, 92, 114),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Perks("Remove all Ads"),
+                      Perks("Unlimited Favorites"),
+                      Perks("Access to All Games"),
+                      Perks("Become a Beta Tester"),
+                      Perks("Supports me ^_^"),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Navigate to the upgrade page or perform upgrade action
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 55, 99, 134),
+            ),
+            child: const Text(
+              '\$9.99',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Future<void> _confirmRemoveFavorite(String? title) async {
+    if (title == null) return;
+
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Remove favorite?'),
+        content: Text(
+          'Watch a short ad, or upgrade to premium, to remove "$title" from your favorites.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop('upgrade'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 40, 80, 104),
+            ),
+            child: const Text(
+              'Upgrade',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop('watch_ad'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 178, 58, 58),
+            ),
+            child: const Text(
+              'Watch ad & remove',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (choice == 'watch_ad') {
+      _watchAdForRemoval(title);
+    } else if (choice == 'upgrade') {
+      _showUpgradeDialog();
+    }
+  }
+
+  void _watchAdForRemoval(String title) {
+    _rewardedAdManager.showIfReady(
+      onUserEarnedReward: (amount, type) async {
+        final favorites = _favoriteBookList();
+        favorites.removeWhere((item) => item['title'] == title);
+        await _favoriteBox.put('favorites', favorites);
+        await ActivityLog.add('Removed favorite book: $title');
+
+        if (mounted) {
+          setState(() {
+            favorite = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Removed from Favorites')),
+          );
+        }
+      },
+      onNotReady: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ad not ready yet — try again in a moment.'),
+          ),
+        );
+      },
     );
   }
 
@@ -440,7 +514,7 @@ class _RbooksState extends State<Rbooks> {
     if (link.isEmpty) {
       messenger.showSnackBar(
         const SnackBar(
-          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+          backgroundColor: Color.fromARGB(148, 34, 39, 58),
 
           content: Text('Book currently unavailable'),
         ),
@@ -455,7 +529,7 @@ class _RbooksState extends State<Rbooks> {
     if (uri == null) {
       messenger.showSnackBar(
         const SnackBar(
-          backgroundColor: const Color.fromARGB(148, 34, 39, 58),
+          backgroundColor: Color.fromARGB(148, 34, 39, 58),
           content: Text('Invalid link'),
         ),
       );
@@ -515,11 +589,13 @@ class _RbooksState extends State<Rbooks> {
     super.initState();
     _loadFavoriteState();
     _loadComments();
+    _rewardedAdManager.load();
   }
 
   @override
   void dispose() {
     _commentController.dispose();
+    _rewardedAdManager.dispose();
     super.dispose();
   }
 

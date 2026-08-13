@@ -310,7 +310,12 @@ class _JournalState extends State<Community> {
                         ),
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
-                          activeColor: const Color.fromARGB(255, 15, 58, 99),
+                          activeThumbColor: const Color.fromARGB(
+                            255,
+                            15,
+                            58,
+                            99,
+                          ),
                           title: normal_Routine
                               ? const Text(
                                   'Bypass the 5-card daily limit',
@@ -379,7 +384,7 @@ class _JournalState extends State<Community> {
             Padding(
               padding: EdgeInsets.all(10),
 
-              child: !_generatedCards.isEmpty
+              child: _generatedCards.isNotEmpty
                   ? Text(
                       MessageShow,
                       textAlign: TextAlign.center,

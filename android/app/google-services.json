@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "850754821669",
+    "project_id": "huddle-401d0",
+    "storage_bucket": "huddle-401d0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:850754821669:android:8467295ff29e2ff63369cc",
+        "android_client_info": {
+          "package_name": "com.example.huddle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEk-WwoSOSyaFq3Ollzm4TzDUGMsNrYM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

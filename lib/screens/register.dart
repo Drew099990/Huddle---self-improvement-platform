@@ -1,13 +1,18 @@
 import "dart:async";
-
+import "package:firebase_auth/firebase_auth.dart";
+import "../helpers/Bannner.dart";
 import "package:flutter/material.dart";
-import "../screens/login.dart";
 
 class Register extends StatefulWidget {
-  const Register({super.key, required this.onRegister});
+  const Register({
+    super.key,
+    required this.onRegister,
+    required this.onSwitchToLogin,
+  });
 
   final Function(bool) onRegister;
-  //call back
+  final VoidCallback onSwitchToLogin;
+
   @override
   State<Register> createState() => _LoginState();
 }
@@ -25,6 +30,139 @@ class _LoginState extends State<Register> {
   bool user_valid = true;
   bool email_valid = true;
   bool password_valid = true;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> _register() async {
+    // Reset validation state
+    setState(() {
+      user_valid = true;
+      email_valid = true;
+      password_valid = true;
+      _userCounter = "username";
+      _emailCounter = "email";
+      _passCounter = "password";
+    });
+
+    bool hasError = false;
+
+    if (_userController.text.isEmpty) {
+      hasError = true;
+      setState(() {
+        user_valid = false;
+        _userCounter = "username is missing.";
+      });
+    }
+    if (_emailController.text.isEmpty) {
+      hasError = true;
+      setState(() {
+        email_valid = false;
+        _emailCounter = "email is missing.";
+      });
+    }
+    if (_passController.text.isEmpty) {
+      hasError = true;
+      setState(() {
+        password_valid = false;
+        _passCounter = "password is missing.";
+      });
+    } else if (_passController.text.length < 6) {
+      hasError = true;
+      setState(() {
+        password_valid = false;
+        _passCounter = "password must be 6+ characters.";
+      });
+    }
+
+    if (hasError) {
+      Timer(Duration(seconds: 3), () {
+        if (!mounted) return;
+        setState(() {
+          loading = true;
+          _userCounter = "username";
+          _emailCounter = "email";
+          _passCounter = "password";
+          user_valid = true;
+          email_valid = true;
+          password_valid = true;
+        });
+      });
+      return;
+    }
+
+    setState(() {
+      loading = false;
+    });
+
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passController.text,
+      );
+
+      // Save the chosen username as the display name
+      await credential.user?.updateDisplayName(_userController.text.trim());
+
+      if (!mounted) return;
+      setState(() {
+        loading = true;
+      });
+      widget.onRegister(true);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+      switch (e.code) {
+        case "email-already-in-use":
+          message = "An account already exists for that email.";
+          break;
+        case "invalid-email":
+          message = "That email address is invalid.";
+          break;
+        case "weak-password":
+          message = "That password is too weak.";
+          break;
+        case "operation-not-allowed":
+          message = "Email/password accounts are not enabled.";
+          break;
+        default:
+          message = e.message ?? "Registration failed. Please try again.";
+      }
+
+      setState(() {
+        loading = true;
+        email_valid = false;
+        password_valid = false;
+        _emailCounter = message;
+        _passCounter = message;
+      });
+
+      Timer(Duration(seconds: 3), () {
+        if (!mounted) return;
+        setState(() {
+          _emailCounter = "email";
+          _passCounter = "password";
+          email_valid = true;
+          password_valid = true;
+        });
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        loading = true;
+        email_valid = false;
+        _emailCounter = "Something went wrong. Please try again.";
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _userController.dispose();
+    _emailController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +247,7 @@ class _LoginState extends State<Register> {
                         ),
                       ),
 
-                      enabled: true,
+                      enabled: loading,
                     ),
                   ),
                   Container(
@@ -117,8 +255,9 @@ class _LoginState extends State<Register> {
                     height: 70,
                     margin: EdgeInsets.only(top: 10),
                     child: TextField(
-                      autocorrect: true,
+                      autocorrect: false,
                       controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: " email",
                         counter: Text(
@@ -135,7 +274,7 @@ class _LoginState extends State<Register> {
                         ),
                       ),
 
-                      enabled: true,
+                      enabled: loading,
                     ),
                   ),
                   SizedBox(height: 10),
@@ -143,7 +282,8 @@ class _LoginState extends State<Register> {
                     width: MediaQuery.of(context).size.width * 0.80,
                     height: 70,
                     child: TextField(
-                      autocorrect: true,
+                      autocorrect: false,
+                      obscureText: true,
                       controller: _passController,
                       decoration: InputDecoration(
                         suffixIcon: Icon(Icons.remove_red_eye_outlined),
@@ -161,19 +301,12 @@ class _LoginState extends State<Register> {
                         ),
                       ),
 
-                      enabled: true,
+                      enabled: loading,
                     ),
                   ),
                   SizedBox(height: 10),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Login(onLogin: (_) {}),
-                        ),
-                      );
-                    },
+                    onPressed: loading ? widget.onSwitchToLogin : null,
                     child: Text(
                       "already have an account?",
                       style: TextStyle(
@@ -183,51 +316,7 @@ class _LoginState extends State<Register> {
                     ),
                   ),
                   InkWell(
-                    onTap: () {
-                      setState(() {
-                        loading = false;
-                      });
-
-                      if (_userController.text.isEmpty) {
-                        setState(() {
-                          user_valid = false;
-                          _userCounter = "username is missing.";
-                          Timer(Duration(seconds: 3), () {
-                            setState(() {
-                              loading = true;
-                              _userCounter = "username";
-                              user_valid = true;
-                            });
-                          });
-                        });
-                      }
-                      if (_emailController.text.isEmpty) {
-                        setState(() {
-                          email_valid = false;
-                          _emailCounter = "email is missing.";
-                          Timer(Duration(seconds: 3), () {
-                            setState(() {
-                              loading = true;
-                              _emailCounter = "email";
-                              email_valid = true;
-                            });
-                          });
-                        });
-                      }
-                      if (_passController.text.isEmpty) {
-                        setState(() {
-                          password_valid = false;
-                          _passCounter = "password is missing.";
-                          Timer(Duration(seconds: 3), () {
-                            setState(() {
-                              loading = true;
-                              _passCounter = "password";
-                              password_valid = true;
-                            });
-                          });
-                        });
-                      }
-                    },
+                    onTap: loading ? _register : null,
                     child: AnimatedContainer(
                       duration: Duration(seconds: 3),
                       decoration: BoxDecoration(
@@ -242,7 +331,7 @@ class _LoginState extends State<Register> {
                       padding: EdgeInsets.all(10),
                       width: MediaQuery.of(context).size.width * 0.6,
                       child: Text(
-                        loading ? "Register" : "Logging...",
+                        loading ? "Register" : "Registering...",
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white),
                       ),

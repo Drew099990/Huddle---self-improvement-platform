@@ -4,8 +4,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '../helpers/activity_log.dart';
 import '../helpers/journal_database.dart';
+import '../helpers/RewardAD.dart';
+import '../helpers/revennuecat.dart';
 import "../subpages/minigame.dart";
 import "../subpages/favorites.dart";
 
@@ -28,13 +31,147 @@ class _ProfileState extends State<Profile> {
   String _installedDaysText = '0 days';
   bool _upgradeMenu = false;
 
+  // --- Premium / RevenueCat state ---
+  bool _isPremium = false;
+  bool _premiumStatusLoading = true;
+  Package? _premiumPackage;
+  bool _packagesLoading = true;
+  bool _isPurchasing = false;
+
+  // --- Broadcast posting limit ---
+  // Free users get 1 broadcast per day. Extra posts for the same day are
+  // unlocked by watching a rewarded ad. Both values are plain int state so
+  // they're easy to read/reset/persist.
+  static const int _baseDailyBroadcastLimit = 1;
+  static const int _bonusBroadcastsPerAd = 1;
+
+  int _broadcastsPostedToday = 0;
+  int _bonusBroadcastSlots = 0;
+  String? _lastBroadcastDate;
+
+  final RewardedAdManager _rewardedAdManager = RewardedAdManager();
+  final TextEditingController _broadcastController = TextEditingController();
+
+  int get _dailyBroadcastLimit =>
+      _baseDailyBroadcastLimit + _bonusBroadcastSlots;
+
+  bool get _canPostBroadcast => _broadcastsPostedToday < _dailyBroadcastLimit;
+
+  String _todayKey() {
+    final now = DateTime.now();
+    return '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _loadBroadcastState() async {
+    final today = _todayKey();
+    final savedDate = _box.get('lastBroadcastDate') as String?;
+
+    int postedToday = _box.get('broadcastsPostedToday', defaultValue: 0) as int;
+    int bonusSlots = _box.get('bonusBroadcastSlots', defaultValue: 0) as int;
+
+    if (savedDate != today) {
+      // New day — reset the daily counters.
+      postedToday = 0;
+      bonusSlots = 0;
+      await _box.put('lastBroadcastDate', today);
+      await _box.put('broadcastsPostedToday', postedToday);
+      await _box.put('bonusBroadcastSlots', bonusSlots);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _lastBroadcastDate = today;
+      _broadcastsPostedToday = postedToday;
+      _bonusBroadcastSlots = bonusSlots;
+    });
+  }
+
+  Future<void> _recordBroadcastPosted() async {
+    _broadcastsPostedToday += 1;
+    await _box.put('broadcastsPostedToday', _broadcastsPostedToday);
+    await _box.put('lastBroadcastDate', _lastBroadcastDate ?? _todayKey());
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _grantBonusBroadcastSlot() async {
+    _bonusBroadcastSlots += _bonusBroadcastsPerAd;
+    await _box.put('bonusBroadcastSlots', _bonusBroadcastSlots);
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     _setupHive();
+    _rewardedAdManager.load();
+    _loadPremiumStatus();
+    _loadPremiumPackage();
+  }
+
+  @override
+  void dispose() {
+    _broadcastController.dispose();
+    _rewardedAdManager.dispose();
+    super.dispose();
   }
 
   bool picSelect = false;
+
+  // --- Premium status + offering ---
+
+  Future<void> _loadPremiumStatus() async {
+    final entitled = await PurchaseService.instance.isEntitled();
+    if (!mounted) return;
+    setState(() {
+      _isPremium = entitled;
+      _premiumStatusLoading = false;
+    });
+  }
+
+  Future<void> _loadPremiumPackage() async {
+    final packages = await PurchaseService.instance.getAvailablePackages();
+    if (!mounted) return;
+    setState(() {
+      // Assumes a single premium package in the default offering.
+      // If you offer multiple tiers, pick the right one here instead
+      // of just taking the first.
+      _premiumPackage = packages.isNotEmpty ? packages.first : null;
+      _packagesLoading = false;
+    });
+  }
+
+  Future<void> _buyPremium(
+    StateSetter setSheetState,
+    BuildContext sheetContext,
+  ) async {
+    final package = _premiumPackage;
+    if (package == null || _isPurchasing) return;
+
+    setSheetState(() => _isPurchasing = true);
+    try {
+      final unlocked = await PurchaseService.instance.purchasePackage(package);
+      if (!mounted) return;
+      if (unlocked) {
+        setState(() => _isPremium = true);
+        setSheetState(() {});
+        if (Navigator.of(sheetContext).canPop()) {
+          Navigator.of(sheetContext).pop();
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Welcome to premium! 🎉")));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Purchase failed: $e")));
+    } finally {
+      if (mounted) setSheetState(() => _isPurchasing = false);
+    }
+  }
 
   Future<void> _pickProfileImage() async {
     setState(() {});
@@ -100,6 +237,7 @@ class _ProfileState extends State<Profile> {
     }
 
     await _loadProfileStats();
+    await _loadBroadcastState();
   }
 
   void _toggleBroadcast() {
@@ -108,89 +246,373 @@ class _ProfileState extends State<Profile> {
     });
 
     if (_showBroadcast) {
+      _broadcastController.clear();
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.circular(10),
-          ),
-          alignment: Alignment.center,
-          elevation: 10,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Global Board"),
-              IconButton(
-                icon: Icon(
-                  Icons.cancel_outlined,
-                  color: const Color.fromARGB(115, 2, 36, 49),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-          contentPadding: EdgeInsets.all(5),
-          actions: [
-            TextField(
-              enabled: true,
-              decoration: InputDecoration(
-                hintText: "share a messsage or quote with the world",
-              ),
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadiusGeometry.circular(10),
             ),
-            Container(
-              margin: EdgeInsets.all(10),
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(146, 8, 59, 46),
-                border: Border.all(),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: SizedBox(
-                width: 135,
-                child: InkWell(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: const Color.fromARGB(148, 34, 39, 58),
-                        content: Text("message shared with the world !!!"),
-                      ),
-                    );
+            alignment: Alignment.center,
+            elevation: 10,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Global Board"),
+                IconButton(
+                  icon: Icon(
+                    Icons.cancel_outlined,
+                    color: const Color.fromARGB(115, 2, 36, 49),
+                  ),
+                  onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Text(
-                        "share message",
-                        style: TextStyle(color: Colors.white),
-                      ),
-
-                      Icon(Icons.language_outlined, color: Colors.white60),
-                    ],
-                  ),
+                ),
+              ],
+            ),
+            contentPadding: EdgeInsets.all(5),
+            actions: [
+              TextField(
+                controller: _broadcastController,
+                enabled: true,
+                decoration: InputDecoration(
+                  hintText: "share a messsage or quote with the world",
                 ),
               ),
-            ),
-          ],
-          content: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              border: Border.all(
-                width: 2,
-                color: Color.fromARGB(115, 202, 205, 207),
+              Text(
+                _canPostBroadcast
+                    ? '${_dailyBroadcastLimit - _broadcastsPostedToday} free broadcast(s) left today'
+                    : 'No free broadcasts left today — watch an ad to post more',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
-            ),
-            child: Text(
-              ' i am a demo message to from sleepy panda of a message to you just to say welcome! ',
-              style: TextStyle(color: const Color.fromARGB(144, 0, 0, 0)),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    margin: EdgeInsets.all(10),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _canPostBroadcast
+                          ? const Color.fromARGB(146, 8, 59, 46)
+                          : const Color.fromARGB(80, 8, 59, 46),
+                      border: Border.all(),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: InkWell(
+                      onTap: !_canPostBroadcast
+                          ? null
+                          : () async {
+                              await _recordBroadcastPosted();
+                              setDialogState(() {});
+
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: const Color.fromARGB(
+                                    148,
+                                    34,
+                                    39,
+                                    58,
+                                  ),
+                                  content: Text(
+                                    "message shared with the world !!!",
+                                  ),
+                                ),
+                              );
+                              Navigator.pop(context);
+                            },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "share message",
+                            style: TextStyle(
+                              color: _canPostBroadcast
+                                  ? Colors.white
+                                  : Colors.white38,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.language_outlined,
+                            color: _canPostBroadcast
+                                ? Colors.white60
+                                : Colors.white24,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    margin: EdgeInsets.all(10),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 78, 128, 143),
+                      border: Border.all(),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        _rewardedAdManager.showIfReady(
+                          onUserEarnedReward: (amount, type) async {
+                            await _grantBonusBroadcastSlot();
+                            setDialogState(() {});
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Nice! You can post $_bonusBroadcastsPerAd more broadcast(s) today.',
+                                ),
+                              ),
+                            );
+                          },
+                          onNotReady: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Ad not ready yet — try again in a moment.',
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.play_circle_outline,
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            content: Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  width: 2,
+                  color: Color.fromARGB(115, 202, 205, 207),
+                ),
+              ),
+              child: Text(
+                ' i am a demo message to from sleepy panda of a message to you just to say welcome! ',
+                style: TextStyle(color: const Color.fromARGB(144, 0, 0, 0)),
+              ),
             ),
           ),
         ),
       ).then((_) {
         if (mounted) setState(() => _showBroadcast = false);
       });
+    }
+  }
+
+  void _showUpgradeSheet() {
+    if (mounted) {
+      setState(() {
+        _upgradeMenu = true;
+      });
+    }
+    try {
+      final controller = showBottomSheet(
+        context: context,
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (sheetContext, setSheetState) => Container(
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(131, 55, 92, 114),
+            ),
+            height: 431,
+            width: MediaQuery.of(sheetContext).size.width * 1,
+            child: Column(
+              children: [
+                Icon(Icons.arrow_downward, color: Colors.black38),
+
+                Container(
+                  width: MediaQuery.of(sheetContext).size.width,
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(151, 14, 71, 117),
+                  ),
+                  child: Column(
+                    children: [
+                      Divider(height: 10, thickness: 5),
+
+                      Text(
+                        "hello there, Friend (❁´◡`❁) ",
+                        style: TextStyle(
+                          color: Colors.black45,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      Text(
+                        "Upgrade to premium",
+                        style: TextStyle(
+                          color: Color.fromARGB(210, 248, 234, 209),
+                        ),
+                      ),
+                      Divider(height: 10),
+                    ],
+                  ),
+                ),
+
+                Container(
+                  height: 300,
+                  width: 600,
+                  padding: EdgeInsets.all(15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Perks("Remove all Ads"),
+                      Perks("Unlimited Favorites"),
+                      Perks("Access to All Games"),
+                      Perks("Become a Beta Tester"),
+                      Perks("Supports me ^_^"),
+                      SizedBox(height: 15),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (_isPremium)
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 15,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  width: 4,
+                                  color: const Color.fromARGB(
+                                    210,
+                                    86,
+                                    101,
+                                    143,
+                                  ),
+                                ),
+                                color: const Color.fromARGB(210, 91, 125, 170),
+                              ),
+                              child: Text(
+                                "You're premium ✓",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color.fromARGB(
+                                    255,
+                                    235,
+                                    231,
+                                    183,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else if (_packagesLoading)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          else if (_premiumPackage == null)
+                            const Text(
+                              "No offering available right now",
+                              style: TextStyle(color: Colors.white70),
+                            )
+                          else
+                            InkWell(
+                              onTap: _isPurchasing
+                                  ? null
+                                  : () => _buyPremium(
+                                      setSheetState,
+                                      sheetContext,
+                                    ),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 15,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    width: 4,
+                                    color: const Color.fromARGB(
+                                      210,
+                                      86,
+                                      101,
+                                      143,
+                                    ),
+                                  ),
+                                  color: _isPurchasing
+                                      ? const Color.fromARGB(120, 91, 125, 170)
+                                      : const Color.fromARGB(210, 91, 125, 170),
+                                ),
+                                child: _isPurchasing
+                                    ? const SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        _premiumPackage!
+                                            .storeProduct
+                                            .priceString,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color.fromARGB(
+                                            255,
+                                            235,
+                                            231,
+                                            183,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(sheetContext).size.width,
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(151, 14, 71, 117),
+                  ),
+                  padding: EdgeInsets.only(top: 5, bottom: 5),
+                  child: Text(
+                    "Thanks for the support, appreciate the help !!!",
+                    style: TextStyle(
+                      color: const Color.fromARGB(255, 185, 179, 161),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      controller.closed.then((_) {
+        if (mounted) {
+          setState(() {
+            _upgradeMenu = false;
+          });
+        }
+      });
+    } catch (e) {
+      print(e);
     }
   }
 
@@ -311,203 +733,20 @@ class _ProfileState extends State<Profile> {
                             ),
                           ],
                         ),
-                        InkWell(
-                          onTap: () {
-                            print("tapped");
-                            if (mounted) {
-                              setState(() {
-                                _upgradeMenu = true;
-                              });
-                            }
-                            // TODO: Show subscription modal
-                            try {
-                              final controller = showBottomSheet(
-                                context: context,
-                                builder: (_) => Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(
-                                      131,
-                                      55,
-                                      92,
-                                      114,
-                                    ),
-                                  ),
-                                  height: 431,
-                                  width: MediaQuery.of(context).size.width * 1,
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_downward,
-                                        color: Colors.black38,
-                                      ),
-
-                                      Container(
-                                        width: MediaQuery.of(
-                                          context,
-                                        ).size.width,
-                                        decoration: BoxDecoration(
-                                          color: const Color.fromARGB(
-                                            151,
-                                            14,
-                                            71,
-                                            117,
-                                          ),
-                                        ),
-
-                                        child: Column(
-                                          children: [
-                                            Divider(height: 10, thickness: 5),
-
-                                            Text(
-                                              "hello there, Friend (❁´◡`❁) ",
-                                              style: TextStyle(
-                                                color: Colors.black45,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-
-                                            Text(
-                                              "Upgrade to premium",
-                                              style: TextStyle(
-                                                color: Color.fromARGB(
-                                                  210,
-                                                  248,
-                                                  234,
-                                                  209,
-                                                ),
-                                              ),
-                                            ),
-                                            Divider(height: 10),
-                                          ],
-                                        ),
-                                      ),
-
-                                      Container(
-                                        height: 300,
-                                        width: 600,
-                                        padding: EdgeInsets.all(15),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Perks("Remove all Ads"),
-                                            Perks("Unlimited Favorites"),
-                                            Perks("Access to All Games"),
-                                            Perks("Become a Beta Tester"),
-                                            Perks("Supports me ^_^"),
-                                            SizedBox(height: 15),
-
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    vertical: 10,
-                                                    horizontal: 15,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          15,
-                                                        ),
-                                                    border: Border.all(
-                                                      width: 4,
-                                                      color:
-                                                          const Color.fromARGB(
-                                                            210,
-                                                            86,
-                                                            101,
-                                                            143,
-                                                          ),
-                                                    ),
-                                                    color: const Color.fromARGB(
-                                                      210,
-                                                      91,
-                                                      125,
-                                                      170,
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    "\$9.99",
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color:
-                                                          const Color.fromARGB(
-                                                            255,
-                                                            235,
-                                                            231,
-                                                            183,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(
-                                        width: MediaQuery.of(
-                                          context,
-                                        ).size.width,
-                                        decoration: BoxDecoration(
-                                          color: const Color.fromARGB(
-                                            151,
-                                            14,
-                                            71,
-                                            117,
-                                          ),
-                                        ),
-                                        padding: EdgeInsets.only(
-                                          top: 5,
-                                          bottom: 5,
-                                        ),
-                                        child: Text(
-                                          "Thanks for the support, appreciate the help !!!",
-                                          style: TextStyle(
-                                            color: const Color.fromARGB(
-                                              255,
-                                              185,
-                                              179,
-                                              161,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                              controller.closed.then((_) {
-                                if (mounted) {
-                                  setState(() {
-                                    _upgradeMenu = false;
-                                  });
-                                }
-                              });
-                            } catch (e) {
-                              print(e);
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
+                        if (_premiumStatusLoading)
+                          const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (_isPremium)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(134, 165, 57, 14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color.fromARGB(
-                                    255,
-                                    37,
-                                    78,
-                                    69,
-                                  ).withOpacity(0.4),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                              color: const Color.fromARGB(134, 14, 122, 71),
                               border: Border.all(
                                 width: 2,
                                 color: Colors.black54,
@@ -515,14 +754,47 @@ class _ProfileState extends State<Profile> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: const Text(
-                              "upgrade",
+                              "premium ✓",
                               style: TextStyle(
                                 fontWeight: FontWeight.w400,
-                                color: Colors.amberAccent,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        else
+                          InkWell(
+                            onTap: _showUpgradeSheet,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color.fromARGB(134, 165, 57, 14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      37,
+                                      78,
+                                      69,
+                                    ).withOpacity(0.4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  width: 2,
+                                  color: Colors.black54,
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: const Text(
+                                "upgrade",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.amberAccent,
+                                ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
 

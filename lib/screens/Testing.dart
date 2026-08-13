@@ -1,76 +1,96 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import '../helpers/revennuecat.dart';
 
-void main() => runApp(const Testing());
-
-class Testing extends StatefulWidget {
-  const Testing({super.key});
+/// A minimal paywall screen. Swap in your own design once the
+/// purchase flow is working end to end.
+class PaywallScreen extends StatefulWidget {
+  const PaywallScreen({super.key});
 
   @override
-  State<Testing> createState() => _TestingState();
+  State<PaywallScreen> createState() => _PaywallScreenState();
 }
 
-class _TestingState extends State<Testing> {
-  String? _selectedImagePath;
+class _PaywallScreenState extends State<PaywallScreen> {
+  List<Package> _packages = [];
+  bool _isLoading = true;
+  bool _isPurchasing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPackages();
+  }
+
+  Future<void> _loadPackages() async {
+    final packages = await PurchaseService.instance.getAvailablePackages();
+    if (!mounted) return;
+    setState(() {
+      _packages = packages;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _buy(Package package) async {
+    setState(() => _isPurchasing = true);
+    try {
+      final unlocked = await PurchaseService.instance.purchasePackage(package);
+      if (!mounted) return;
+      if (unlocked) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Purchase failed: $e")));
+    } finally {
+      if (mounted) setState(() => _isPurchasing = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    setState(() => _isPurchasing = true);
+    final restored = await PurchaseService.instance.restorePurchases();
+    if (!mounted) return;
+    setState(() => _isPurchasing = false);
+    if (restored) {
+      Navigator.of(context).pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No active purchases found")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Profile Image Preview',
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey.shade400),
+    return Scaffold(
+      appBar: AppBar(title: const Text("Go Premium")),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _packages.isEmpty
+          ? const Center(child: Text("No offerings available"))
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                for (final package in _packages)
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      title: Text(package.storeProduct.title),
+                      subtitle: Text(package.storeProduct.description),
+                      trailing: Text(package.storeProduct.priceString),
+                      onTap: _isPurchasing ? null : () => _buy(package),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _isPurchasing ? null : _restore,
+                  child: const Text("Restore Purchases"),
                 ),
-                child: _selectedImagePath == null
-                    ? const Icon(Icons.person, size: 90, color: Colors.grey)
-                    : ClipOval(
-                        child: Image.file(
-                          File(_selectedImagePath!),
-                          fit: BoxFit.cover,
-                          width: 180,
-                          height: 180,
-                        ),
-                      ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      final result = await FilePicker.pickFiles(
-                        type: FileType.image,
-                      );
-                      if (result != null && result.files.single.path != null) {
-                        setState(() {
-                          _selectedImagePath = result.files.single.path!;
-                        });
-                      }
-                    },
-                    child: const Text('select file'),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {},
-                    child: const Text('upload file'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+              ],
+            ),
     );
   }
 }
