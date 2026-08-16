@@ -83,7 +83,7 @@ class _FavoritesState extends State<Favorites> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 178, 58, 58),
+              backgroundColor: const Color.fromARGB(255, 180, 106, 106),
             ),
             child: const Text(
               'Watch ad & remove',
@@ -266,41 +266,82 @@ class _FavoritesState extends State<Favorites> {
 
                 return Column(
                   children: [
-                    if (favorites.length >= limit)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'You have reached your $limit favorite book limit. Watch an ad to add more.',
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 42, 100, 122),
-                                ),
-                              ),
+                    (favorites.length >= limit)
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                            ElevatedButton(
-                              onPressed: _watchAdForSlot,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(
-                                  255,
-                                  178,
-                                  58,
-                                  58,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'You have reached your $limit favorite book limit. Watch an ad to add more.',
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 42, 100, 122),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: const Text(
-                                'Watch ad',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                                ElevatedButton(
+                                  onPressed: _watchAdForSlot,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color.fromARGB(
+                                      173,
+                                      228,
+                                      89,
+                                      89,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Watch ad',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "A reader lives a thousand lives before he dies. The man who never reads lives only one.",
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 42, 100, 122),
+                                    ),
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const Home(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color.fromARGB(
+                                      137,
+                                      60,
+                                      77,
+                                      124,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Browse',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                     Divider(height: 10),
                     Expanded(
                       child: GridView.builder(
@@ -392,7 +433,12 @@ class _FavoritesState extends State<Favorites> {
                                         ),
                                         child: const Icon(
                                           Icons.favorite,
-                                          color: Colors.redAccent,
+                                          color: Color.fromARGB(
+                                            255,
+                                            196,
+                                            92,
+                                            92,
+                                          ),
                                           size: 20,
                                         ),
                                       ),

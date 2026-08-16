@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -89,6 +90,64 @@ class _ProfileState extends State<Profile> {
     _bonusBroadcastSlots += _bonusBroadcastsPerAd;
     await _box.put('bonusBroadcastSlots', _bonusBroadcastSlots);
     if (mounted) setState(() {});
+  }
+
+  /// Live stream of broadcast messages, newest first.
+  ///
+  /// Each broadcast is its own push() child under `broadcasts/{pushId}`
+  /// with a `text` and a server-assigned `timestamp` — same pattern as
+  /// book comments, so simultaneous posts from different users each get
+  /// their own node instead of clobbering one big list value.
+  Stream<List<String>> _broadcastsStream() {
+    final ref = FirebaseDatabase.instance
+        .ref('broadcasts')
+        .orderByChild('timestamp');
+
+    return ref.onValue.map((event) {
+      final value = event.snapshot.value;
+      final entries = <MapEntry<int, String>>[];
+
+      if (value is Map) {
+        value.forEach((key, val) {
+          if (val is Map && val['text'] != null) {
+            final ts = val['timestamp'] is int ? val['timestamp'] as int : 0;
+            entries.add(MapEntry(ts, val['text'].toString()));
+          }
+        });
+      }
+
+      entries.sort((a, b) => b.key.compareTo(a.key)); // newest first
+      return entries.map((e) => e.value).toList();
+    });
+  }
+
+  Future<bool> _postBroadcast(String rawText) async {
+    final trimmed = rawText.trim();
+    if (trimmed.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please write a message before sharing.')),
+      );
+      return false;
+    }
+
+    final ref = FirebaseDatabase.instance.ref('broadcasts');
+
+    try {
+      await ref.push().set({
+        'text': trimmed,
+        'timestamp': ServerValue.timestamp,
+      });
+      return true;
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not share message. Please try again.'),
+          ),
+        );
+      }
+      return false;
+    }
   }
 
   @override
@@ -197,7 +256,13 @@ class _ProfileState extends State<Profile> {
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Global Board"),
+                Text(
+                  "Global Board",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black45,
+                  ),
+                ),
                 IconButton(
                   icon: Icon(
                     Icons.cancel_outlined,
@@ -224,7 +289,8 @@ class _ProfileState extends State<Profile> {
                     : 'No free broadcasts left today — watch an ad to post more',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
-              Column(
+              SizedBox(height: 10),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
@@ -241,7 +307,12 @@ class _ProfileState extends State<Profile> {
                       onTap: !_canPostBroadcast
                           ? null
                           : () async {
+                              final messageText = _broadcastController.text;
+                              final posted = await _postBroadcast(messageText);
+                              if (!posted) return;
+
                               await _recordBroadcastPosted();
+                              _broadcastController.clear();
                               setDialogState(() {});
 
                               if (!mounted) return;
@@ -264,7 +335,7 @@ class _ProfileState extends State<Profile> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            "share message",
+                            "broadcast",
                             style: TextStyle(
                               color: _canPostBroadcast
                                   ? Colors.white
@@ -332,16 +403,71 @@ class _ProfileState extends State<Profile> {
               ),
             ],
             content: Container(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border.all(
                   width: 2,
                   color: Color.fromARGB(115, 202, 205, 207),
                 ),
               ),
-              child: Text(
-                ' i am a demo message to from sleepy panda of a message to you just to say welcome! ',
-                style: TextStyle(color: const Color.fromARGB(144, 0, 0, 0)),
+              child: StreamBuilder<List<String>>(
+                stream: _broadcastsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Could not load messages: ${snapshot.error}',
+                        style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return SizedBox(
+                      height: 70,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    );
+                  }
+
+                  final broadcasts = snapshot.data ?? [];
+
+                  if (broadcasts.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'No messages yet. Be the first to share something with the world.',
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    );
+                  }
+
+                  return ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 240),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: broadcasts.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Text(
+                            broadcasts[index],
+                            style: const TextStyle(
+                              color: Color.fromARGB(200, 0, 0, 0),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -446,17 +572,22 @@ class _ProfileState extends State<Profile> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'William',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Achiever 1',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Icon(Icons.star_border_outlined),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      '@william',
+                      '@gogetter',
                       style: TextStyle(color: Colors.grey),
                     ),
 

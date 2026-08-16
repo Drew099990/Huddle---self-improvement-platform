@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: "AIzaSyBEk-WwoSOSyaFq3Ollzm4TzDUGMsNrYM8",
-    appId: '1:850754821669:android:YOUR_UNIQUE_APP_ID',
+    appId: '1:850754821669:android:a5c9843d3f3f82d73369cc',
     messagingSenderId: '850754821669', // Same as Project Number
     projectId: 'huddle-401d0',
     storageBucket: 'huddle-401d0.firebasestorage.app',

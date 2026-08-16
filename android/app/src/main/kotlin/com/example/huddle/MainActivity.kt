@@ -1,4 +1,4 @@
-package com.example.huddle
+package com.sleepypanda.huddle
 
 import io.flutter.embedding.android.FlutterActivity
 

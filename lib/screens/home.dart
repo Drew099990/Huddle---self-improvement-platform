@@ -34,9 +34,9 @@ class _HomeState extends State<Home> {
 
   String get _interstitialAdUnitId {
     if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712'; // TEST ID
+      return 'ca-app-pub-8563885250863599/1793241580'; // TEST ID
     } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/4411468910'; // TEST ID
+      return 'ca-app-pub-8563885250863599/1793241580'; // TEST ID
     }
     throw UnsupportedError('Unsupported platform');
   }
