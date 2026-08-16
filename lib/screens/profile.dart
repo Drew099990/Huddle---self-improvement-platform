@@ -260,7 +260,8 @@ class _ProfileState extends State<Profile> {
                   "Global Board",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black45,
+                    color: const Color.fromARGB(139, 15, 51, 58),
+                    fontSize: 17,
                   ),
                 ),
                 IconButton(
@@ -276,11 +277,18 @@ class _ProfileState extends State<Profile> {
             ),
             contentPadding: EdgeInsets.all(5),
             actions: [
-              TextField(
-                controller: _broadcastController,
-                enabled: true,
-                decoration: InputDecoration(
-                  hintText: "share a messsage or quote with the world",
+              Container(
+                margin: EdgeInsets.only(top: 15),
+                child: TextField(
+                  controller: _broadcastController,
+                  enabled: true,
+
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    hintText: "share a messsage or quote with the world",
+                  ),
                 ),
               ),
               Text(
@@ -455,12 +463,21 @@ class _ProfileState extends State<Profile> {
                       itemCount: broadcasts.length,
                       separatorBuilder: (_, __) => const Divider(),
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Text(
-                            broadcasts[index],
-                            style: const TextStyle(
-                              color: Color.fromARGB(200, 0, 0, 0),
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(36, 157, 175, 209),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(width: 1, color: Colors.black12),
+                          ),
+                          padding: EdgeInsets.all(4),
+
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Text(
+                              broadcasts[index],
+                              style: const TextStyle(
+                                color: Color.fromARGB(200, 0, 0, 0),
+                              ),
                             ),
                           ),
                         );
@@ -612,7 +629,7 @@ class _ProfileState extends State<Profile> {
                         const SizedBox(width: 8),
                         // NOTE: still a hardcoded placeholder ('4') — not
                         // wired up to real broadcast/post data.
-                        _buildStatCard('Posts', '4', Icons.forum, size.width),
+                        _buildStatCard('Posts', '-', Icons.forum, size.width),
                       ],
                     ),
 

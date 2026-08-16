@@ -164,55 +164,7 @@ class _RbooksState extends State<Rbooks> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Leave a Comment',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 27, 89, 117),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(sheetContext),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _commentController,
-                  maxLines: 2,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Write your comment here...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: const Color.fromARGB(255, 244, 246, 247),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 88, 116, 129),
-                    ),
-                    onPressed: () async {
-                      final commentText = _commentController.text;
-                      Navigator.pop(sheetContext);
-                      await _saveComment(commentText);
-                    },
-                    child: const Text(
-                      'Submit',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
+
                 const SizedBox(height: 18),
                 const Text(
                   'All comments',
@@ -242,7 +194,11 @@ class _RbooksState extends State<Rbooks> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color.fromARGB(255, 88, 116, 129),
+                          ),
+                        ),
                       );
                     }
 
@@ -286,6 +242,59 @@ class _RbooksState extends State<Rbooks> {
                       ),
                     );
                   },
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Leave a Comment',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 27, 89, 117),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _commentController,
+                  maxLines: 2,
+
+                  decoration: InputDecoration(
+                    hintText: 'Write your comment here...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: const Color.fromARGB(84, 74, 184, 145),
+                        width: 1,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 244, 246, 247),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 88, 116, 129),
+                    ),
+                    onPressed: () async {
+                      final commentText = _commentController.text;
+                      Navigator.pop(sheetContext);
+                      await _saveComment(commentText);
+                    },
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
               ],
             ),
