@@ -10,12 +10,17 @@ class PurchaseService {
   PurchaseService._();
   static final PurchaseService instance = PurchaseService._();
 
-  // TODO: replace with your RevenueCat public API keys
-  static const String _androidApiKey = "test_zTBksufByMpXSjzXqWmjvYRzRiz";
-  static const String _iosApiKey = "your_apple_api_key";
+  // TODO: replace with your RevenueCat public API keys.
+  // Android keys are prefixed "goog_", iOS keys are prefixed "appl_".
+  // These are DIFFERENT keys from DIFFERENT dashboard project entries —
+  // do not reuse the Android key for iOS (that was the previous bug here).
+  static const String _androidApiKey = "goog_XVjWyKvvyzSOqPAyVRwdxDjSTCP";
+  static const String _iosApiKey = "appl_REPLACE_WITH_YOUR_IOS_KEY";
 
-  // TODO: replace with the entitlement identifier you configured in RevenueCat
-  static const String entitlementId = "'Huddle Pro'";
+  // TODO: replace with the entitlement identifier you configured in RevenueCat.
+  // NOTE: no surrounding single quotes — those were being taken literally
+  // as part of the string and would never match a real entitlement key.
+  static const String entitlementId = "Huddle";
 
   bool _isConfigured = false;
 
@@ -45,15 +50,33 @@ class PurchaseService {
   }
 
   /// Fetches the current default offering's packages.
+  /// Swallows errors and returns [] — kept for existing callers, but
+  /// prefer [getAvailablePackagesOrThrow] when you need to show *why*
+  /// no packages came back (e.g. in upgrade-sheet UI).
   Future<List<Package>> getAvailablePackages() async {
     try {
-      final offerings = await Purchases.getOfferings();
-      return offerings.current?.availablePackages ?? [];
+      return await getAvailablePackagesOrThrow();
     } catch (e) {
       // ignore: avoid_print
       print("Error fetching offerings: $e");
       return [];
     }
+  }
+
+  /// Same as [getAvailablePackages] but rethrows on failure instead of
+  /// swallowing the error, so the UI can surface the real reason
+  /// (missing configure() call, no "current" offering set in the
+  /// RevenueCat dashboard, bad API key, products not approved, etc.)
+  /// instead of a generic "no offering available" dead end.
+  Future<List<Package>> getAvailablePackagesOrThrow() async {
+    if (!_isConfigured) {
+      throw StateError(
+        'RevenueCat SDK not configured yet — PurchaseService.instance.'
+        'configure() must complete before fetching offerings.',
+      );
+    }
+    final offerings = await Purchases.getOfferings();
+    return offerings.current?.availablePackages ?? [];
   }
 
   /// Attempts to purchase a package. Returns true if the entitlement

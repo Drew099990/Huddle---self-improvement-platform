@@ -68,6 +68,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       "Make a short note",
                       style: TextStyle(
                         color: const Color.fromARGB(144, 22, 39, 97),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     content: SizedBox(

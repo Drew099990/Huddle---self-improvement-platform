@@ -27,8 +27,9 @@ bool canToggleFavorite({
   required int limit,
 }) {
   // Removing a favorite is always attemptable — whether it actually happens
-  // is gated later by the watch-ad/upgrade flow, not by the limit here.
-  // Only *adding* a new favorite is blocked once the limit is reached.
+  // is gated later, unconditionally, by the watch-ad flow, not by the
+  // limit here. Only *adding* a new favorite is blocked once the limit
+  // (base + any ad-earned bonus slots) is reached.
   if (isAlreadyFavorite) {
     return true;
   }
@@ -46,10 +47,17 @@ class Rbooks extends StatefulWidget {
 
 class _RbooksState extends State<Rbooks> {
   bool favorite = false;
-  int limit = 5;
+
+  // Base free limit. Each rewarded ad watched to unlock an addition past
+  // this limit grants one permanent bonus slot (persisted in Hive), so
+  // the effective limit is `_baseLimit + _bonusFavoriteSlots`.
+  static const int _baseLimit = 5;
+  int _bonusFavoriteSlots = 0;
+
+  int get _favoriteLimit => _baseLimit + _bonusFavoriteSlots;
+
   late Box _favoriteBox;
   final TextEditingController _commentController = TextEditingController();
-  List<String> _comments = [];
 
   final RewardedAdManager _rewardedAdManager = RewardedAdManager();
 
@@ -63,38 +71,35 @@ class _RbooksState extends State<Rbooks> {
         .replaceAll(RegExp(r'^_|_$'), '');
   }
 
-  Future<void> _loadComments() async {
-    final ref = FirebaseDatabase.instance.ref('book_comments/${_bookKey()}');
+  /// Live stream of comments for this book, newest first.
+  ///
+  /// Comments are stored as individual push() children under
+  /// `book_comments/{bookKey}/{pushId}` with a `text` and a server-assigned
+  /// `timestamp`. This avoids the read-modify-overwrite race condition you'd
+  /// get from storing comments as a single list value, since two users
+  /// commenting around the same time each get their own child node instead
+  /// of one clobbering the other's write.
+  Stream<List<String>> _commentsStream() {
+    final ref = FirebaseDatabase.instance
+        .ref('book_comments/${_bookKey()}')
+        .orderByChild('timestamp');
 
-    try {
-      final snapshot = await ref.get();
-      final value = snapshot.value;
-      List<String> loadedComments = [];
+    return ref.onValue.map((event) {
+      final value = event.snapshot.value;
+      final entries = <MapEntry<int, String>>[];
 
-      if (value is List) {
-        loadedComments = value
-            .map((item) => item?.toString() ?? '')
-            .where((item) => item.trim().isNotEmpty)
-            .toList();
-      } else if (value is Map) {
-        loadedComments = value.values
-            .map((item) => item?.toString() ?? '')
-            .where((item) => item.trim().isNotEmpty)
-            .toList();
-      }
-
-      if (mounted) {
-        setState(() {
-          _comments = loadedComments;
+      if (value is Map) {
+        value.forEach((key, val) {
+          if (val is Map && val['text'] != null) {
+            final ts = val['timestamp'] is int ? val['timestamp'] as int : 0;
+            entries.add(MapEntry(ts, val['text'].toString()));
+          }
         });
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _comments = [];
-        });
-      }
-    }
+
+      entries.sort((a, b) => b.key.compareTo(a.key)); // newest first
+      return entries.map((e) => e.value).toList();
+    });
   }
 
   Future<void> _saveComment(String rawComment) async {
@@ -108,16 +113,15 @@ class _RbooksState extends State<Rbooks> {
       return;
     }
 
-    final updatedComments = addCommentToList(_comments, trimmedComment);
     final ref = FirebaseDatabase.instance.ref('book_comments/${_bookKey()}');
 
     try {
-      await ref.set(updatedComments);
+      await ref.push().set({
+        'text': trimmedComment,
+        'timestamp': ServerValue.timestamp,
+      });
       if (mounted) {
-        setState(() {
-          _comments = updatedComments;
-          _commentController.clear();
-        });
+        _commentController.clear();
       }
     } catch (_) {
       if (mounted) {
@@ -219,29 +223,69 @@ class _RbooksState extends State<Rbooks> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 260),
-                  child: _comments.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Text(
-                            'No comments yet. Be the first to share your thoughts.',
+                StreamBuilder<List<String>>(
+                  stream: _commentsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'Could not load comments: ${snapshot.error}',
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 12,
                           ),
-                        )
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: _comments.length,
-                          separatorBuilder: (_, __) => const Divider(),
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    final comments = snapshot.data ?? [];
+
+                    if (comments.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text(
+                          'No comments yet. Be the first to share your thoughts.',
+                        ),
+                      );
+                    }
+
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 260),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: comments.length,
+                        separatorBuilder: (_, __) => const Divider(),
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Container(
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color.fromARGB(255, 244, 246, 247),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color.fromARGB(85, 52, 87, 75),
+                                  width: 1,
+                                ),
+                              ),
                               child: Text(
-                                _comments[index],
+                                comments[index],
                                 style: const TextStyle(fontSize: 15),
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -278,16 +322,26 @@ class _RbooksState extends State<Rbooks> {
   Future<void> _loadFavoriteState() async {
     _favoriteBox = await _openFavoritesBox();
     final isFavorite = _isFavoriteBook(widget.book.cast<String, String>());
+    final bonusSlots =
+        _favoriteBox.get('bonusFavoriteSlots', defaultValue: 0) as int;
     if (mounted) {
       setState(() {
         favorite = isFavorite;
+        _bonusFavoriteSlots = bonusSlots;
       });
     }
   }
 
-  // Removing a favorite is now ad-gated: this only decides WHETHER a removal
-  // is allowed (limit checks, confirmation) and hands off the actual removal
-  // to _watchAdForRemoval, which only removes inside onUserEarnedReward.
+  Future<void> _grantBonusFavoriteSlot() async {
+    _bonusFavoriteSlots += 1;
+    await _favoriteBox.put('bonusFavoriteSlots', _bonusFavoriteSlots);
+    if (mounted) setState(() {});
+  }
+
+  // Adding: allowed for free up to `_favoriteLimit`. Past that, adding is
+  // only possible by watching a rewarded ad (see `_watchAdForAddition`).
+  // Removing: always requires watching a rewarded ad, with no other way
+  // around it — there's no upgrade/paid bypass for either action.
   Future<void> _toggleFavorite() async {
     _favoriteBox = await _openFavoritesBox();
     final favorites = _favoriteBookList();
@@ -297,141 +351,118 @@ class _RbooksState extends State<Rbooks> {
     final canToggle = canToggleFavorite(
       isAlreadyFavorite: isAlreadyFavorite,
       favoritesCount: favorites.length,
-      limit: limit,
+      limit: _favoriteLimit,
     );
 
-    if (!canToggle) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: const Color.fromARGB(253, 221, 228, 233),
-          title: const Text('Favorite limit reached'),
-          content: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 223, 228, 233),
-              border: Border.all(
-                color: const Color.fromARGB(85, 52, 87, 75),
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              'You can only save up to 5 favorite books. Upgrade to add more.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Color.fromARGB(108, 32, 66, 117)),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showUpgradeDialog();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 40, 80, 104),
-              ),
-              child: const Text(
-                'Upgrade',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-          ],
-        ),
-      );
+    if (isAlreadyFavorite) {
+      // Removal always requires watching an ad — no other path removes it.
+      await _confirmRemoveFavorite(title);
       return;
     }
 
-    if (isAlreadyFavorite) {
-      // Removal path: don't remove yet — confirm, then require a watched ad
-      // or an upgrade.
-      await _confirmRemoveFavorite(title);
-    } else {
-      favorites.add(widget.book.cast<String, String>());
-      await _favoriteBox.put('favorites', favorites);
-      await ActivityLog.add('Added favorite book: ${widget.book['title']}');
-
-      if (mounted) {
-        setState(() {
-          favorite = true;
-        });
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Added to Favorites')));
+    if (!canToggle) {
+      // Limit reached — the only way to add another is to watch an ad.
+      await _confirmAddPastLimit();
+      return;
     }
+
+    favorites.add(widget.book.cast<String, String>());
+    await _favoriteBox.put('favorites', favorites);
+    await ActivityLog.add('Added favorite book: ${widget.book['title']}');
+
+    if (mounted) {
+      setState(() {
+        favorite = true;
+      });
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Added to Favorites')));
   }
 
-  void _showUpgradeDialog() {
-    showDialog(
+  Future<void> _confirmAddPastLimit() async {
+    final choice = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color.fromARGB(255, 223, 228, 233),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        backgroundColor: const Color.fromARGB(253, 221, 228, 233),
         title: const Text(
-          'Upgrade to Premium',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(200, 27, 52, 77),
-          ),
+          'Limit reached',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black45),
         ),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 420,
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(131, 55, 92, 114),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Perks("Remove all Ads"),
-                      Perks("Unlimited Favorites"),
-                      Perks("Access to All Games"),
-                      Perks("Become a Beta Tester"),
-                      Perks("Supports me ^_^"),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+        content: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 223, 228, 233),
+            border: Border.all(
+              color: const Color.fromARGB(85, 52, 87, 75),
+              width: 2,
             ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'You can save up to $_favoriteLimit favorite books right now. '
+            'Watch a short ad to unlock one more slot.',
           ),
         ),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color.fromARGB(108, 32, 66, 117)),
+            ),
+          ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Navigate to the upgrade page or perform upgrade action
-            },
+            onPressed: () => Navigator.of(context).pop('watch_ad'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 55, 99, 134),
+              backgroundColor: const Color.fromARGB(255, 165, 102, 102),
             ),
             child: const Text(
-              '\$9.99',
-              style: TextStyle(color: Colors.white70),
+              'Watch ad to add',
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
       ),
+    );
+
+    if (choice == 'watch_ad') {
+      _watchAdForAddition();
+    }
+  }
+
+  void _watchAdForAddition() {
+    _rewardedAdManager.showIfReady(
+      onUserEarnedReward: (amount, type) async {
+        await _grantBonusFavoriteSlot();
+
+        final favorites = _favoriteBookList();
+        final title = widget.book['title'];
+        final alreadyThere = favorites.any((item) => item['title'] == title);
+
+        if (!alreadyThere) {
+          favorites.add(widget.book.cast<String, String>());
+          await _favoriteBox.put('favorites', favorites);
+          await ActivityLog.add('Added favorite book: ${widget.book['title']}');
+        }
+
+        if (mounted) {
+          setState(() {
+            favorite = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Slot unlocked — added to Favorites')),
+          );
+        }
+      },
+      onNotReady: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ad not ready yet — try again in a moment.'),
+          ),
+        );
+      },
     );
   }
 
@@ -441,33 +472,39 @@ class _RbooksState extends State<Rbooks> {
     final choice = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Remove favorite?'),
-        content: Text(
-          'Watch a short ad, or upgrade to premium, to remove "$title" from your favorites.',
+        title: const Text(
+          'Remove favorite?',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black45),
+        ),
+        content: Container(
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: const Color.fromARGB(85, 52, 87, 75),
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Watch a short ad to remove "$title" from your favorites.',
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop('upgrade'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 40, 80, 104),
-            ),
-            child: const Text(
-              'Upgrade',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop('watch_ad'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 178, 58, 58),
+              backgroundColor: const Color.fromARGB(255, 175, 102, 102),
             ),
             child: const Text(
               'Watch ad & remove',
               style: TextStyle(color: Colors.white),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color.fromARGB(108, 32, 66, 117)),
             ),
           ),
         ],
@@ -476,8 +513,6 @@ class _RbooksState extends State<Rbooks> {
 
     if (choice == 'watch_ad') {
       _watchAdForRemoval(title);
-    } else if (choice == 'upgrade') {
-      _showUpgradeDialog();
     }
   }
 
@@ -588,7 +623,6 @@ class _RbooksState extends State<Rbooks> {
   void initState() {
     super.initState();
     _loadFavoriteState();
-    _loadComments();
     _rewardedAdManager.load();
   }
 
@@ -791,31 +825,4 @@ class _RbooksState extends State<Rbooks> {
       ),
     );
   }
-}
-
-Widget Perks(String perk) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          Icons.star_border_outlined,
-          size: 34,
-          color: const Color.fromARGB(242, 197, 204, 218),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            perk,
-            softWrap: true,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Color.fromARGB(255, 246, 246, 248),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }

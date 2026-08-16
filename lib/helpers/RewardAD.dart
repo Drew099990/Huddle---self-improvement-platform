@@ -79,12 +79,13 @@ class RewardedAdManager {
   bool _isLoading = false;
 
   /// Flip to false and fill in real IDs before release.
-  static const bool useTestAds = true;
+  static const bool useTestAds = false;
 
   String get _adUnitId {
     if (!useTestAds) {
-      if (Platform.isAndroid) return 'YOUR_ANDROID_REWARDED_ID';
-      if (Platform.isIOS) return 'YOUR_IOS_REWARDED_ID';
+      if (Platform.isAndroid) return 'ca-app-pub-8563885250863599/8159977419';
+      if (Platform.isIOS)
+        return 'ca-app-pub-8563885250863599/1234567890'; // Replace with your actual iOS ad unit ID
     }
     // Google's official TEST rewarded IDs — safe during development.
     if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/5224354917';

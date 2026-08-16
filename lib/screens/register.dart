@@ -1,6 +1,5 @@
 import "dart:async";
 import "package:firebase_auth/firebase_auth.dart";
-import "../helpers/Bannner.dart";
 import "package:flutter/material.dart";
 
 class Register extends StatefulWidget {
