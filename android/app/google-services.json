@@ -1,15 +1,16 @@
 {
   "project_info": {
     "project_number": "850754821669",
+    "firebase_url": "https://huddle-401d0-default-rtdb.firebaseio.com",
     "project_id": "huddle-401d0",
     "storage_bucket": "huddle-401d0.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:850754821669:android:8467295ff29e2ff63369cc",
+        "mobilesdk_app_id": "1:850754821669:android:a5c9843d3f3f82d73369cc",
         "android_client_info": {
-          "package_name": "com.example.huddle"
+          "package_name": "com.sleepypanda.huddle"
         }
       },
       "oauth_client": [],
